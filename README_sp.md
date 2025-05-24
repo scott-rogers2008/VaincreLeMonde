@@ -1,9 +1,10 @@
 # VaincreLeMonde
-Ensayos, capacitaciones, metas, métricas y autoevaluaciones para triunfar en la vida.
+Ensayos, entrainamientos, metas, métricas y autoevaluaciones para triunfar en la vida.
+(Yo quiero mas aqui de solo un google-translate, me español necesita mucha práctica y deseo que estos documentos estén mejor adaptados a quienes que los usan.)
 
 Aprender primero a escuchar, sentir, reconocer y distinguir la influencia guía del universo, así como a comprender y seguir su guía, es la clave más importante para liberar su poder ilimitado en nuestras vidas. El primer paso es reconocer que existen dos corrientes básicas de influencia y dirección: una de corrupción, muerte y oscuridad basada en el egoísmo; la otra de crecimiento, vida y luz basada en el amor. (O mejor dicho, una de intentar consumir más de lo que se produce (oscuridad) vs. otra de intentar producir más de lo que se consume (luz).)
 
-La comprensión básica de elegir el crecimiento en lugar del deterioro es una buena primera métrica para poder ver que estás creciendo y convirtiéndote en algo más. Si bien elegir el egoísmo en lugar del amor puede parecer atractivo, su destino final siempre es la corrupción y la decadencia. En la misma línea de la tentación de la corrupción, a menudo es difícil reconocer lo que realmente vale la pena (ya que el crecimiento y el aprendizaje suelen estar asociados al dolor), pero es mucho mejor convertirse en una mejor persona al afrontar ese dolor que corromperse más al intentar evitarlo.
+La comprensión básica de elegir el crecimiento en lugar del deterioro es una buena primera métrica para poder ver que estás creciendo y convirtiéndose en algo más. Elegir el egoísmo en lugar del amor puede parecer atractivo, su destino final siempre es la corrupción y la decadencia. En la misma línea de la tentación de la corrupción, a menudo es difícil reconocer lo que realmente vale la pena (ya que el crecimiento y el aprendizaje suelen estar asociados al dolor), pero es mucho mejor convertirse en una mejor persona al afrontar ese dolor que corromperse más al intentar evitarlo.
 
 Vidas más felices y productivas se construyen siguiendo el camino de la luz, la vida y el amor. Negocios más felices y productivos se construyen, y pueden construirse, aprendiendo a comprender mejor y a seguir este camino. Comunidades y naciones más felices y productivas se pueden construir comprendiendo y fomentando la adhesión a este camino de luz, vida y amor.
 
@@ -13,4 +14,4 @@ Hasta que pueda crear una página web que facilite mejor el debate y el aprendiz
 También quiero centrarme en el aprendizaje más importante. Puede que haya debates religiosos y filosóficos sobre algunos de los aspectos más importantes, pero no quiero involucrarme en debates inútiles sobre lo que realmente importa. Quiero que esto sea lo más abierto, accesible y comprensivo posible, y que sea de verdadera ayuda.
 
 ### El título -- Vancre Le Monde
-Lo saqué de esta charla (https://www.churchofjesuschrist.org/study/general-conference/2022/10/47nelson?lang=eng) -- Creo que suena mejor en francés
+Lo saqué de esta charla (https://www.churchofjesuschrist.org/study/general-conference/2022/10/47nelson?lang=spa) -- Creo que suena mejor en francés
