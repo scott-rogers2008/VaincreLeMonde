@@ -14,4 +14,4 @@ Hasta que pueda crear una página web que facilite mejor el debate y el aprendiz
 También quiero centrarme en el aprendizaje más importante. Puede que haya debates religiosos y filosóficos sobre algunos de los aspectos más importantes, pero no quiero involucrarme en debates inútiles sobre lo que realmente importa. Quiero que esto sea lo más abierto, accesible y comprensivo posible, y que sea de verdadera ayuda.
 
 ### El título -- Vancre Le Monde
-Lo saqué de esta charla (https://www.churchofjesuschrist.org/study/general-conference/2022/10/47nelson?lang=spa) -- Creo que suena mejor en francés
+Lo saqué de esta charla (https://www.churchofjesuschrist.org/study/general-conference/2022/10/47nelson?lang=spa) -- Creo que tiene mas 'cette Je-ne-sais-pas' en francés.
