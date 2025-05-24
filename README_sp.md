@@ -1,5 +1,5 @@
 # VaincreLeMonde
-Ensayos, entrainamientos, metas, métricas y autoevaluaciones para triunfar en la vida.
+Ensayos, entrainamientos, metas, métricas y autoevaluaciones para triunfar en la vida.</br>
 (Yo quiero mas aqui de solo un google-translate, me español necesita mucha práctica y deseo que estos documentos estén mejor adaptados a quienes que los usan.)
 
 Aprender primero a escuchar, sentir, reconocer y distinguir la influencia guía del universo, así como a comprender y seguir su guía, es la clave más importante para liberar su poder ilimitado en nuestras vidas. El primer paso es reconocer que existen dos corrientes básicas de influencia y dirección: una de corrupción, muerte y oscuridad basada en el egoísmo; la otra de crecimiento, vida y luz basada en el amor. (O mejor dicho, una de intentar consumir más de lo que se produce (oscuridad) vs. otra de intentar producir más de lo que se consume (luz).)
