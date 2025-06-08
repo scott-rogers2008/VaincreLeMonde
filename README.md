@@ -1,4 +1,4 @@
-# VaincreLeMonde
+# VaincreLeMonde: improving the world one person at a time
 Essays, trainings, goals, metrics, and self assesments to win at life.
 
 Learning first how to hear/feel, recognize/distinguish the guiding influence of the universe, as well as how to understand and follow its guidance is the most important key to unlocking its unlimited power in our lives. The first step is to recognize that there are two basic streams of influence and direction: one of corruption, death, and darkness based on selfishness; the other of growth, life, and light based on love. (Or rather one of trying to consume more than you produce (darkness) vs one of trying to produce more than you consume (light).)
