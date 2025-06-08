@@ -1,4 +1,4 @@
-# VaincreLeMonde
+# VaincreLeMonde: mejorando el mundo una persona a la vez
 Ensayos, entrainamientos, metas, métricas y autoevaluaciones para triunfar en la vida.</br>
 (Yo quiero mas aqui de solo un google-translate, me español necesita mucha práctica y deseo que estos documentos estén mejor adaptados a quienes que los usan.)
 
