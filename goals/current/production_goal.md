@@ -11,7 +11,7 @@ Create a tool it inspire, facilitate, and track growth ---- by December 25, 2025
 ### <pre> Step (how?)                  :    Deadline (when?)    :   (check when completed) </pre>
 - <pre>Create a basic outline of content                                           :   06/08/2025   : X
 - <pre>Create a goal that I can track                                              :   06/19/2025   : X
-- <pre>Create basic web page where user can login and fill out forms               :   07/15/2025
+- <pre>Create basic web page where users can login and fill out forms              :   07/15/2025
 - <pre>Add to web page calander, journal/blog, and other goal tracking interfaces  :   09/01/2025
 - <pre>Add capability for users to interact, share and work on goals together      :   10/15/2025
 - <pre>Make tool/web-page accessable and usable via mobile device                  :   12/25/2025  </pre>
