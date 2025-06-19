@@ -18,5 +18,5 @@ Create a tool it inspire, facilitate, and track growth ---- by December 25, 2025
 
 ### Leasons Learned:
 (I haven't learned this lesson yet, but I know that each of the pieces aren't actually finalized and set in stone on their completion date, so
-I have to figure out how to plan for flexability and growth durring the process and still stay on track (or improve the track as I go).  
+I have to figure out how to plan for flexability and growth durring the process and still stay on track -- or improve the track as I go.  
 How should this form or tool change based on the need for more flexibility?)
