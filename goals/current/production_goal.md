@@ -1,5 +1,5 @@
 ## Goal: Create Improvement tool to facilitate, track, and encourage growth.
-(Using the [performance goal template](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/performance_goal_form.pdf))
+(Using the [achivement goal template](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/achivement_goal_form.pdf))
 
 ### Value / Mission / Roal (Why?):
 There are too many people who have lost the ability to dream, that have been crushed by the weight of the world. I want to help them to concure their doubts, 
