@@ -11,6 +11,7 @@ pip install django djangorestframework djangorestframework-jwt pwJWT pytz certif
 
 ```bash
 django-admin startproject backend .
+python manage.py startapp API
 ```
 
 ### Create frontend
