@@ -13,7 +13,7 @@ I want to create and test tools that inspire, facilitate, and track growth as my
 | Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
 |--------|--------|---------|-----------|----------|--------|---------|
 |        |        |         |           |  1y 2y   |        |         |
-|        |  1y 2y |  1y 2y  |   1y 2y   |          |        |         |
+|        |  1y 2y |  1y 2y  |   1y 2y   |  1y 2y   |  1y 2y |         |
 |        |        |         |           |          |        |         |
 |        |        |         |           |          |        |         |
 |        |        |         |           |          |        |         |
