@@ -16,7 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import TemplateView
+from django.views.generic import RedirectView
+from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
+from API import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path(r'api-token-auth', obtain_jwt_token),
+    path(r'api-token-refresh', refresh_jwt_token),
+    path(r'api-token-verify', refresh_jwt_token),
+    path(r'api-register-user', views.CreateUserView.as_view()),
+    path(r'api-login-user', views.LoginUserView.as_view()),
+    path(r'(?P<path>.*\..*)$', RedirectView.as_view(url='/static/%(path)s')),
+    path(r'', TemplateView.as_view(template_name='angular/index.html')),
 ]
