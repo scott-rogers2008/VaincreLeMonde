@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { UserService } from './user.service';
 
 @Component({
     selector: 'app-root',
@@ -6,6 +7,15 @@ import { Component } from '@angular/core';
     styleUrls: ['./app.component.css'],
     standalone: false
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'frontend';
+  public user: any;
+
+  constructor(public _userService: UserService) { }
+
+  ngOnInit() {
+    this._userService.getCookie();
+  }
+
 }
+
