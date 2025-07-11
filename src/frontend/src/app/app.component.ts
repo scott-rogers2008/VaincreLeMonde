@@ -11,10 +11,10 @@ export class AppComponent implements OnInit {
   title = 'frontend';
   public user: any;
 
-  constructor(public _userService: UserService) { }
+  //constructor(public _userService: UserService) { }
 
   ngOnInit() {
-    this._userService.getCookie();
+  //  this._userService.getCookie();
   }
 
 }
