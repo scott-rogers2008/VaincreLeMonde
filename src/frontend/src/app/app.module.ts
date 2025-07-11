@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 import { AppComponent } from './app.component';
@@ -18,29 +18,23 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTreeModule } from '@angular/material/tree';
 import { CookieService } from 'ngx-cookie-service';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    LoginComponent,
-    RegisterComponent,
-    LandingComponent,
-    DashboardComponent,
-  ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    HttpClientModule,
-    AppRoutingModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatTreeModule,
-  ],
-  providers: [
-    AuthService,
-    CookieService,
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        LoginComponent,
+        RegisterComponent,
+        LandingComponent,
+        DashboardComponent,
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        FormsModule,
+        AppRoutingModule,
+        MatToolbarModule,
+        MatIconModule,
+        MatTreeModule], providers: [
+        AuthService,
+        CookieService,
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 
 export class AppModule { }
 
