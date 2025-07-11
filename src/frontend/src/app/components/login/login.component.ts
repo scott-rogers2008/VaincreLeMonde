@@ -4,9 +4,10 @@ import { User } from '../../models/user';
 import { CookieService } from 'ngx-cookie-service';
 
 @Component({
-  selector: 'login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+    selector: 'login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.css'],
+    standalone: false
 })
 
 export class LoginComponent implements OnInit {
