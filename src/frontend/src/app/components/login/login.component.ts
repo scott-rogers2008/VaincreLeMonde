@@ -23,7 +23,7 @@ export class LoginComponent implements OnInit {
         console.log(data);
         if (data.status == 200) {
           if (data.json()['status'] == 'success') {
-            this.cookieservice.set('token', data.json()['token']);
+            this.cookieservice.set('X-AuthToken', data.json()['token'], 0, '/');
           } else {
             console.log('Invalid Credentials');
           }

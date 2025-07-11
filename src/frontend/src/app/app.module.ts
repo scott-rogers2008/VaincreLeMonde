@@ -12,6 +12,10 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTreeModule } from '@angular/material/tree';
 import { CookieService } from 'ngx-cookie-service';
 
 @NgModule({
@@ -27,6 +31,9 @@ import { CookieService } from 'ngx-cookie-service';
     FormsModule,
     HttpClientModule,
     AppRoutingModule,
+    MatToolbarModule,
+    MatIconModule,
+    MatTreeModule,
   ],
   providers: [
     AuthService,

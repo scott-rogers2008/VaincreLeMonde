@@ -1,8 +1,8 @@
 from django.shortcuts import render, HttpResponse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -23,22 +23,29 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
 class CreateUserView(CreateAPIView):
+    model = get_user_model()
+    permission_classes = [
+        permissions.AllowAny # Or anon users can't register
+    ]
     serializer_class = UserSerializer
 
     def post(self, request, *args, **kwargs):
+        print("create user view")
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            self.perform_create(serializer)
+        if serializer.is_valid():
+            user = serializer.save()
+            self.perform_create(user)
             headers = self.get_success_headers(serializer.data)
-            user = self.model.get(username=serializer.data['username'])
             payload = jwt_payload_handler(user)
             token = jwt_encode_handler(payload)
+            print("--Create User View:  successful")
             return Response(
                 token,
                 status=status.HTTP_201_CREATED,
                 headers=headers
             )
         else:
+            print("--Create User View:  fialed", serializer.errors)
             return Response(
                 status=status.HTTP_400_BAD_REQUEST
             )

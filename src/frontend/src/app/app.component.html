@@ -1,1 +1,28 @@
-<router-outlet></router-outlet>
+<mat-toolbar id="main-menuebar" color="primary">
+  <div class="full_width">
+    <div class="left">
+      <ul>
+        <li class="inline">
+          <a class="inline" href="/">Home</a>
+        </li>
+        <li class="inline">
+          <a class="inline" href="/blog/">Blog</a>
+        </li>
+      </ul>
+    </div>
+    <div class="right">
+      <ul class="inline">
+        <li class="inline">
+          <div class="login" *ngIf="!_userService.token">
+            <a href="/acct/">Login</a>
+          </div>
+          <div class="login" *ngIf="_userService.token">
+            <a href="/acct/">{{_userService.username}}</a>
+          </div>
+        </li>
+      </ul>
+      <mat-icon class="mat-icon" width="40">account_circle</mat-icon>
+    </div>
+  </div>
+
+</mat-toolbar><router-outlet></router-outlet>

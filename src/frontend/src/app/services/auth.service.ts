@@ -14,15 +14,16 @@ export class AuthService {
   constructor(private http: HttpClient, private cookieservice: CookieService ){}
 
   login(user:any): Observable <any> {
-		let url: string = '/api-login-user/';
-		// console.log(document.cookie['csrftoken']);
+    let url: string = 'http://127.0.0.1:8000/api-login-user/';
+		console.log(document.cookie);
 		return this.http.post(url, user, {headers:
 								 this.headers});
 	}
 
   register(user: any): Observable <any>{
-		let url: string = '/api-register-user/';
-		return this.http.post(url, user, {headers:
+    let url: string = 'http://127.0.0.1:8000/api-register-user/';
+    console.log('attempting to register');
+    return this.http.post(url, JSON.stringify(user), {headers:
 								this.headers});
 	}
 

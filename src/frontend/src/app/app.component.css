@@ -1,0 +1,29 @@
+.full_width {
+  width: 100%;
+}
+
+ul {
+  display: inline;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.inline {
+  display: inline;
+}
+
+a {
+  padding-right: 15px;
+}
+
+.left {
+  float: left;
+}
+
+.right {
+  display: flex;
+  justify-content: right;
+  direction: rtl;
+  float: right;
+}
