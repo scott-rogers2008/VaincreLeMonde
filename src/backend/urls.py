@@ -23,9 +23,9 @@ from API import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(r'api-token-auth', obtain_jwt_token),
-    path(r'api-token-refresh', refresh_jwt_token),
-    path(r'api-token-verify', refresh_jwt_token),
+    path(r'api-token-auth/', obtain_jwt_token),
+    path(r'api-token-refresh/', refresh_jwt_token),
+    path(r'api-token-verify/', refresh_jwt_token),
     path(r'api-register-user/', views.CreateUserView.as_view()),
     path(r'api-login-user/', views.LoginUserView.as_view()),
     path(r'(?P<path>.*\..*)$', RedirectView.as_view(url='/static/%(path)s')),

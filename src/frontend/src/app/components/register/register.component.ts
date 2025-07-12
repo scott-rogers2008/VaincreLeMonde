@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
-import { CookieService } from 'ngx-cookie-service';
 
 @Component({
     selector: 'app-register',
@@ -11,7 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
 })
 export class RegisterComponent implements OnInit {
 
-  constructor(public auth: AuthService, public cookieservice: CookieService) { }
+  constructor(public auth: AuthService) { }
   public user = new User('', '', null);
 
   ngOnInit() {
@@ -22,20 +21,33 @@ export class RegisterComponent implements OnInit {
     this.auth.register(this.user).subscribe({
       next: (data) => {
         console.log(data);
-        if (data.status == 200) {
-          if (data.json()['status'] == 'success') {
-            this.cookieservice.set('X-AuthToken', data.json()['token'], 0, '/');
-          } else {
-            console.log('Invalid Credentials');
-          }
+            this.auth.updateData(data);
+      },
+      error: (err: any) => {
+        console.log(err)
+        if (err.error.username != undefined) {
+          alert(err.error.username[0]);
+        }
+        else if (err.error.email != undefined) {
+          alert(err.error.email)
         }
         else {
-          console.log("Some error occured")
+          alert(err);
         }
       }
     })
 
   }
+
+  LogoutUser() {
+    console.log("logout user");
+    this.auth.logout()
+  }
+
+  refreshToken() {
+    this.auth.refreshToken();
+  }
+
     get diagnostic() { return JSON.stringify(this.user); }
 
 }

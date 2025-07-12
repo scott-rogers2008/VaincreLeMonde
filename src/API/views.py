@@ -1,6 +1,7 @@
 from django.shortcuts import render, HttpResponse
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
+from django.http.response import JsonResponse  
 
 from rest_framework import viewsets, permissions
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
@@ -46,8 +47,9 @@ class CreateUserView(CreateAPIView):
             )
         else:
             print("--Create User View:  fialed", serializer.errors)
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST
+            return JsonResponse(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 

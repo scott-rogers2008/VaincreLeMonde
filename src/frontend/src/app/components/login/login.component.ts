@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
-import { CookieService } from 'ngx-cookie-service';
 
 @Component({
     selector: 'login',
@@ -11,7 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
 })
 
 export class LoginComponent implements OnInit {
-  constructor(public auth: AuthService, public cookieservice: CookieService){}
+  constructor(public auth: AuthService){}
   public user: any = new User('', '', null);
 
   ngOnInit(): void{
@@ -22,19 +21,28 @@ export class LoginComponent implements OnInit {
     this.auth.login(this.user).subscribe({
       next: (data) => {
         console.log(data);
-        if (data.status == 200) {
-          if (data.json()['status'] == 'success') {
-            this.cookieservice.set('X-AuthToken', data.json()['token'], 0, '/');
-          } else {
-            console.log('Invalid Credentials');
-          }
+        if (data.status == 'success') {
+            console.log('login successful...')
+            this.auth.updateData(data.token);
         }
         else {
-          console.log("Some error occured")
+          console.log("Some error occured data.status = " + data.status)
+          alert(data.error)
         }
+      },
+      error: (err: any) => {
+        console.log("Some error occured = " + err)
       }
     })
-  	
+  }
+
+  LogoutUser() {
+    console.log("logout user");
+    this.auth.logout()
+  }
+
+  refreshToken() {
+    this.auth.refreshToken();
   }
     get diagnostic() { return JSON.stringify(this.user); }
 

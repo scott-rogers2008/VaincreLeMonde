@@ -12,8 +12,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ( 'id', 'username', 'email', 'password')
 
     def create(self, validated_data):
+        email = ''
+        if 'email' in validated_data:
+            email = validated_data['email']
+
         user = UserModel.objects.create_user(
-            email=validated_data['email'],
+            email=email,
             username=validated_data['username'],
             password=validated_data['password'],
         )
@@ -36,9 +40,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             return data
 
         def create(self, validated_data):
+            email = ''
+            if 'email' in validated_data:
+                email = validated_data['email']
             user = User.objects.create_user(
                 username=validated_data['username'],
-                email=validated_data['email'],
+                email=email,
                 password=validated_data['password']
             )
             return user
