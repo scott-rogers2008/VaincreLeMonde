@@ -1,0 +1,13 @@
+.full_width {
+  width: 100%;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+}
+
+.center_text {
+  padding-left: 10%;
+  width: 80%;
+}
