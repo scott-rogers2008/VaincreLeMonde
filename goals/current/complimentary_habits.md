@@ -13,10 +13,10 @@ I want to create and test tools that inspire, facilitate, and track growth as my
 | Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
 |--------|--------|---------|-----------|----------|--------|---------|
 |        |        |         |           |  1y 2y   |        |         |
-|        |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
+|        |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
+|  1y 2y |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
+|  1y 2y |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
+|  1y 2y |  1y 2y |         |           |          |        |         |
 
 ### Lessons learned & motivation after first month:
 Maybe I should alter the form to make it easier to use with multiple goals. I think that maybe I also need to think of a good way to recover or restart 
@@ -24,6 +24,9 @@ habit based goals -- starting right before a vacation was not wise, it's a lot h
 
 I came accross [this video](https://www.youtube.com/watch?v=R6QQDy1OUhE) and realized that I should create a "My First Goal" to help improve how well 
 we achieve.
+
+While I'm getting this going I've been using Habitica to track these habits (and a few others, like excersize, cleaning, and studying Korean.) And just 
+getting in the habit of checking the box each day does seep helpful in keeping me on track and moving forward.
 
 | Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
 |--------|--------|---------|-----------|----------|--------|---------|
