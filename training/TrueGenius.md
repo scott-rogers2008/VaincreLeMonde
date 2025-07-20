@@ -8,7 +8,7 @@ So how do I look? Can you imagine the smile that he’d have just seeing you? Pe
 ready to embrace you? If he were here wouldn’t he bend time and space so that he could spend time with you individually and let you know how much he loves YOU!
 
 For the past while I’ve been spending my personal time learning about learning and self-improvement(this github and the eventual website and apps), 
-and I came across Bloom’s Taxonomy of learning and education. It’s a pyramid of techniques, at the base of which is what we can remember. Then what we 
+and I came across Bloom’s Taxonomy of learning and education ( [Bloom's Taxonomy image](Blooms_Taxonomy_pyramid_cake-style-use-with-permission.jpg). It’s a pyramid of techniques, at the base of which is what we can remember. Then what we 
 understand and then what we can apply. Above that is how well we can analyze the information we remember, understand, and apply. Next is how well we 
 make it our own, critique it, connect it and mix it. And then we get to the genius level of creation that changes the world. This taxonomy has been around
 for longer than I’ve been alive, but it was originally thought that you have to build this pyramid from the ground up and it was only taught to evaluators
