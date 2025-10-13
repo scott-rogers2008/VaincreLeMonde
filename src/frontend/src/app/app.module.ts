@@ -12,6 +12,8 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { BlogComponent } from './components/blog/blog.component';
+import { SafeHtmlPipe } from './components/blog/blog.pipe';
 
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,6 +36,7 @@ import { CookieService } from 'ngx-cookie-service';
     MatToolbarModule,
     MatIconModule,
     MatTreeModule,
+    BlogComponent,
   ],
   providers: [
     AuthService,

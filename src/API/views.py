@@ -13,11 +13,13 @@ from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework_jwt.settings import api_settings
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 import jwt
 import json
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, BlogPostSerializer
 from backend.settings import SECRET_KEY
+from .models import BlogPost
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -72,3 +74,8 @@ class LoginUserView(APIView):
               {'error': 'Invalid credentials',
               'status': 'failed'},
             )
+
+class BlogPostViewSet(viewsets.ModelViewSet):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]

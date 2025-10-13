@@ -6,6 +6,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { BlogComponent } from './components/blog/blog.component';
 
 const appRoutes: Routes = [
 	{
@@ -23,6 +24,10 @@ const appRoutes: Routes = [
     {
         path: 'dashboard',
         component: DashboardComponent,
+    },
+    {
+      path: 'blog',
+      component: BlogComponent,
     },
 ]
 

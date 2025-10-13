@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import BlogPost
+from django.contrib.auth.models import User
 
 UserModel = get_user_model()
 
@@ -49,3 +51,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password']
             )
             return user
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username']
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    author = UserSerializer()
+    class Meta:
+        model = BlogPost
+        fields = '__all__'

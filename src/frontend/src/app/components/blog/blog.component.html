@@ -1,0 +1,11 @@
+<ul>
+  <div class="center_text">
+    @for (post of posts; track post.id) {
+      <h2>{{ post.title }}</h2>
+      <div [innerHtml]="post.content | safeHtml">
+        {{ post.content }}
+      </div>
+      <small>By <b>{{ post.author.username }}</b> on {{ post.created_at }}</small>
+    }
+  </div>
+</ul>
