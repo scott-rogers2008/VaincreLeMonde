@@ -1,4 +1,5 @@
 # The Tower I Am
+<img src="TowerIAm.jpg" />
 So I call this “The Tower I Am” with reference to the “I Am” that is one of the names of God, 
 and also following somewhat the esoteric traditions of the Kabbalistic Tree of Life, that transforms 
 the creation story into a path of understanding and gaining access to God. The idea being that there 
@@ -21,3 +22,4 @@ and possess a greater knowledge”. The path to this end is trying to accumulate
 as many vices as possible, and continue that process well into the eternities. Virtues are hard to accumulate and vices 
 are hard to part with. So with the mind maps and study necessary to create them, I want to also come up with better 
 challenges, metrics, and goals to make sure I’m really moving forward.
+
