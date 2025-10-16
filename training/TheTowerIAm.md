@@ -26,5 +26,18 @@ in other to help us obtain greatness for ourselves. Yet, virtues are hard to acc
 are hard to part with. So with the mind maps and study necessary to create them, I want to also come up with better 
 challenges, metrics, and goals to make sure I’m really moving forward. I want to accumulate and internalize (optimize) as 
 may tools and skills as I can that can help me press forward in this endevor.
-
-
+<br>
+<br>
+I love how the first examples of revelation in the Book of Mormon are of people hearing something from other people and then
+going to God to find out on their own, for themselves, if it is true or not. And so I created this framework for me to help
+me as I read and study since it looked like that is what the Kabbalah was created for (at a time when that kind of stuff might 
+have been considered heresy and needed to be kept in the dark). While all of these lessons I am creating here are
+mostly for myself. I picked the creation story for the frame work and my own set of "steps" for each day because I liked that
+idea from the Kabbalistic mysticism and it seemed like one of the only ways for me to make any real sense of the creation story
+that had the sun, moon and stars created in the middle after there were plants growing on the earth in that story, but I 
+think that the real power of using this as a personal path of creation from chaos to divine comes from the work and study that goes into 
+creating it for oneself. I'm not using the same steps or words from the Kabbalah, nor any Indian or other tradition that might have 
+also adopted the "magic" number 7. -- That number didn't fit as well when it was applied to the rainbow, six works better there with 
+thee primary and three secondary colors, and those 6 worked better for me here in my six days of creation. ... So for anyone who
+may follow along, I think your free to pick any number or framework that you like and start from there. Think of steps that have worked
+or that you think might work and build from there.
