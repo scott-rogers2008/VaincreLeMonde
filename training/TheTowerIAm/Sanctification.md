@@ -11,19 +11,28 @@ weaknesses and encouraging them feel like the victim rather than shoulder the re
 There are a lot of good reasons why the first step on road to true success is separation. I picked it because it 
 had a more clear connection in my mind to separating the light from the darkness. But I thoroughly loved it when I
 was looking for scriptures and talks to help me with it and found Elder Holland's Oct 2000 General Conference talk
-https://www.churchofjesuschrist.org/study/general-conference/2000/10/sanctify-yourselves?lang=eng and the scripture 
+[Sanctify Yourselves](https://www.churchofjesuschrist.org/study/general-conference/2000/10/sanctify-yourselves?lang=eng) and the scripture 
 in Joshua 3:5 ***“Sanctify yourselves: for tomorrow the Lord will do wonders among you.”*** -- doesn't sound like the 
-perfect first (next) step on ones iron rod path to a truly magical and magnificent future. It applies to other symbolic
-first steps like Baptism, or first-next steps like partaking of Sacrament bread and water/wine (when I need a fresh start
-type of feeling). And Elder Holland's talk was powerful with him talking about the need to be pure and ready in advance, 
-so that when the storms strike you will be ready to help and bless those that are caught in it. It gave an excellent 
+perfect first (next) step on ones iron rod path to a truly magical and magnificent future. It applies to other 
+first steps like Repentence along with baptism or partaking of Sacrament bread and water/wine (it's nice to have a fresh start
+type of feeling). And Elder Holland's talk was powerful with him sharing the need we have to be pure and ready in advance, 
+so that when the storms strike you will be ready to help and bless those that are caught in it. He gave an excellent 
 example of lightning striking when not expected, and someone (or multiple people) having been prepared and ready to
 respond.
 <br>
 <br>
-Now as it applies to general learning and study, separating oneself from distractions is an important part optimizing the 
-effectiveness of study. That might be even more particularly true if you can do it all inside your own mind, even when in
-an environment where you don't have control over all of external things trying to distract you.
+Elder Hales also talked about this in his 2000 General Conference talk [The Covenant of Baptism: To Be in the Kingdom and of the Kingdom](https://www.churchofjesuschrist.org/study/general-conference/2000/10/the-covenant-of-baptism-to-be-in-the-kingdom-and-of-the-kingdom?lang=eng).
+This was a talk much like Elder Hollands recent April 2024 talk, they both had gone through painful experiences and had come back with conviction
+to do better, be more. Elder Hales talked about not being of the world but of the heavenly kingdom, setting ourselves up to 
+"walk in a newness of life" (Rom. 6:4).
 <br>
 <br>
-I almost every, if not completely every, wise person exemplify this principle of separation.
+As for how it applies in general to learning, study, and life? Separating oneself from pernicious distractions is an important part the preparation
+needed to optimizing the effectiveness of study. That might be even more particularly true if you can do it all inside your own mind, 
+even when in an environment where you don't have control over all of external things trying to distract you. Being able to clear your head is
+an important skill to be honed and improved, while failing to do so can impede grasping the concepts that one is trying to learn.
+<br>
+<br>
+I think that almost every, if not completely every, wise person exemplify this principle of separation. Jesus would frequently get 
+away to some private place to be alone and pray. I think it's important to with each of these steps to know how they bring us closer to him, by
+becoming more like him.
