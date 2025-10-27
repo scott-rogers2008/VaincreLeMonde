@@ -5,43 +5,19 @@
 Similar to the motivation in the [associated achivement goal](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/current/production_goal.md)
 I want to create and test tools that inspire, facilitate, and track growth as my way of trying to help the world (or those in it that need it the most).
 
+I'm changing this one up from what and how I was tracking it because of how inconvinient it is to track this here. ... While I do want to come
+here periodically as I continue to update, improve, and solidify what it is that I want to and will do with this, puting my goals here was not
+a productive way to get help with them. I did find that just having a box to check did tend to make me more likely to be more productive and 
+since there are a lot of places to do that which are far more ideal than here. I'll simply list the 5 main categories, and general goals here
+as well as more specific goals that will be easy for me to track in my personal journal.
+
 ### Habits & Frequency:
-1. Work on VaincreLeMond project daily
-2. Study (goals or code) daily
-3. 
+1. Improve physical health.  ( exercise at least 10min daily, and incorporate more vegetables into my diet daily )
+2. Improve my knoledge. ( Work on the AI for my Discipulus Secretus Publishing, and study Korian -- both daily )
+3. Improve my wisdom ( As part of the AI I'm builing, I want to create a personal encyclopedia ... I think this should be my next production goal. )
+4. Improve my spirituality ( I'm going to pick a weekly virtue to focus on and put aditional study character development into that)
+5. Improve my social interactions ( this is the one thing I'm less certain about, but Blake likes to help me out with this and I did start doing D&D with friends. )
 
-| Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
-|--------|--------|---------|-----------|----------|--------|---------|
-|        |        |         |           |  1y 2y   |        |         |
-|        |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
-|  1y 2y |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
-|  1y 2y |  1y 2y |  1y 2y  | 1y 2y     |  1y 2y   |  1y 2y |  1y 2y  |
-|  1y 2y |  1y 2y |         |           |          |        |         |
 
-### Lessons learned & motivation after first month:
-Maybe I should alter the form to make it easier to use with multiple goals. I think that maybe I also need to think of a good way to recover or restart 
-habit based goals -- starting right before a vacation was not wise, it's a lot harder to try and stick to new habits while on vacation.
-
-I came accross [this video](https://www.youtube.com/watch?v=R6QQDy1OUhE) and realized that I should create a "My First Goal" to help improve how well 
-we achieve.
-
-While I'm getting this going I've been using Habitica to track these habits (and a few others, like excersize, cleaning, and studying Korean.) And just 
-getting in the habit of checking the box each day does seep helpful in keeping me on track and moving forward.
-
-| Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
-|--------|--------|---------|-----------|----------|--------|---------|
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-
-| Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday|
-|--------|--------|---------|-----------|----------|--------|---------|
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-|        |        |         |           |          |        |         |
-
-### Lessons learned & motivation after third month:
+So far tracking these in my journal is helpfull, and perhaps more helpful than just a check box because it does a better job of capturing 
+the quality of action and not just a binary representation of accomplishment.
