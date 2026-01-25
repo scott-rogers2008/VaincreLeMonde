@@ -1,7 +1,7 @@
 # (Working Title) Gnostic Universalism
 If this term already means something to you it might be the wrong term, as I think it might have been used for other things. 
 I'm looking for a Grand Unifying Philosophy that can help bring people together no matter what they currently believe in and work 
-together at building each other up. I also think in the hiearchy of what truths matter most that this ultimate Grand Unifying Philosophy 
+together at building each other up. I also think in the hierarchy of what truths matter most that this ultimate Grand Unifying Philosophy 
 would probably be at the top, or perhaps should be. I might be tempted to just call this The Grand Unifying Philosophy, but I don't think
 I'm there yet. Hopefully eventually we can get there together. So in order to get to this Ultimate Grand Unifying Philosophy I've been asking myself
 several questions. What would be The Most Important Thing to learn? What do I know? What can I know? What does it matter? What is most
@@ -13,15 +13,15 @@ highly overestimate their ability for self-awareness. It looks like it’s prima
 made aware of this importance, I think that this should change. I am all too painfully aware of the Dunning-Kruger effect and the confirmation 
 bias and how these can taint even our surveys and the way that we collect and analyze data making it difficult to know almost anything for 
 certainty. Dr. Eurich’s studies into the “Introspection Illusion,” like the Dunning-Kruger model, are useful in knowing that we probably aren’t 
-as good as we think we are at knowing our strengths and knowing the limits of our strengths. Dr. Eurich suggest that the path to improved 
+as good as we think we are at knowing our strengths and knowing the limits of our strengths. Dr. Eurich suggests that the path to improved 
 self-awareness is asking the right questions. So I think this sounds like a good place to start: 'How can I know myself?' and 'How can I know anything?'
 
-I think that it’s probably best to start with Descartes’ most basic kernel of truth, “I exist.”(my paraphrasing of his words). While the exact 
+Along these lines it’s probably best to start with Descartes’ most basic kernel of truth, “I exist.”(my paraphrasing of his words). While the exact 
 nature and extent of that existence seems to be debatable, forming various families of thought, that small kernel seems to hold true for everyone. 
 I can’t see any value or reason for any person to doubt their own existence -- while there are some types of emotional abuse that might generate 
-that kind of doubt, I hope that it doesn’t happen and isn’t studied. I believe that starting here gives us better access to what life is and what possible 
-meanings it might have, since it may very well be the only kernel of thought that is as undisputed as it is. Solipsism goes so far as to 
-argue that it’s the only truly knowable thing.
+that kind of doubt, I hope that it doesn’t happen and isn’t studied. I believe that starting with this kernel of truth gives us better access to 
+what life is and what possible meanings it might have, since it may very well be the only kernel of thought that is as undisputed as it is. Solipsism 
+goes so far as to argue that it’s the only truly knowable thing.
 
 I think that next in the list of undeniable truths is that there is some universe or environment in which I exist. I exist and there is some 
 environment that I exist in that might or might not be wholly distinct from myself. There is at least a cognitive distinction from the me and 
@@ -46,11 +46,11 @@ put it, “... Now, for this cause I know that man is nothing, which thing I nev
 I think that this is the way we talk to God, the way we get to know Him. All efforts to rigorously prove the existence of God let alone the divine 
 nature of His revelations to us have proven to be very difficult if not impossible. And being that any all-powerful being could, if he wanted, 
 make such a thing indubitable, beyond even the possibility of doubt, shows me that if such a being exists, that He encourages us to question 
-that existence, or at least find out for ourselves. So we have an opportunity to take it as a personal challenge and try to know who He is. I think 
+that existence, or at least to find out for ourselves. So we have an opportunity to take it as a personal challenge and try to know who He is. I think 
 we can, no matter where are in life, start by equating Him with the It, the all of existence which turns out to be less doubtable than even the I. 
 It turns out to be a lot harder to doubt that anything exists, since here we are having experiences, so there must be something even if it’s the 
 something related to the illusion of everything. There is this It of existence that is very hard to ignore. And understanding It and our 
-relationship to It is probably (and I calculate this probability to be so high so as to call it "certaintly) more important than anything other
+relationship to It is probably (and I calculate this probability to be so high so as to call it "certainly") more important than anything other
 knowledge we can obtain.
 
 If there is a God, a He that is so integrally connected with all of the It that It doesn’t operate outside of the bounds of what He allows, 
