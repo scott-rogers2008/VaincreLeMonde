@@ -46,21 +46,22 @@ put it, “... Now, for this cause I know that man is nothing, which thing I nev
 I think that this is the way we talk to God, the way we get to know Him. All efforts to rigorously prove the existence of God let alone the divine 
 nature of His revelations to us have proven to be very difficult if not impossible. And being that any all-powerful being could, if he wanted, 
 make such a thing indubitable, beyond even the possibility of doubt, shows me that if such a being exists, that He encourages us to question 
-that existence, or at least find it for ourselves. So we have an opportunity to take it as a personal challenge and try to know who He is. I think 
+that existence, or at least find out for ourselves. So we have an opportunity to take it as a personal challenge and try to know who He is. I think 
 we can, no matter where are in life, start by equating Him with the It, the all of existence which turns out to be less doubtable than even the I. 
 It turns out to be a lot harder to doubt that anything exists, since here we are having experiences, so there must be something even if it’s the 
 something related to the illusion of everything. There is this It of existence that is very hard to ignore. And understanding It and our 
-relationship to It is probably more important than anything other knowledge we can obtain.
+relationship to It is probably (and I calculate this probability to be so high so as to call it "certaintly) more important than anything other
+knowledge we can obtain.
 
 If there is a God, a He that is so integrally connected with all of the It that It doesn’t operate outside of the bounds of what He allows, 
 He doesn’t mind us questioning His existence, in fact if He exists then He certainly designed the world, the universe, in such a way that 
-encourages us to find out for ourselves in a way that is uniquely and personally our own. We are all enabled to decide for ourselves if we 
-don’t believe that there is any meaning to life or the universe, that it is all just random chance, and behave accordingly if we so choose. 
-For some people the assigning a God to the It of existence overly mystifies our existence, and there may be a fair amount of truth to that. 
-There are probably people both historical and present that overly mystify God. There are certainly those that have and do use the idea of God 
-for personal gain. If there is a God then, what does this tell us about Him? Perhaps this is also something that He would have us come to learn 
-on our own, but I think it’s clear that He doesn’t need recognition and/or praise, that He’s even willing to be hated or despised. I think it 
-also means that there is a strong possibility that the words, “I am a jealous God” aren’t accurately His (at the very least, not the way those 
+encourages us not only to find out for ourselves but also in a way that is uniquely and personally our own. We are all enabled to decide for 
+ourselves if we don’t believe that there is any meaning to life or the universe, that it is all just random chance, and behave accordingly if 
+we so choose. For some people the assigning a God to the It of existence overly mystifies our existence, and there may be a fair amount of truth 
+to that. There are probably people both historical and present that overly mystify God. There are certainly those that have and do use the idea 
+of God for personal gain. If there is a God then, what does this tell us about Him? Perhaps this is also something that He would have us come to 
+learn on our own, but I think it’s clear that He doesn’t need recognition and/or praise, that He’s even willing to be hated or despised. I think 
+it also means that there is a strong possibility that the words, “I am a jealous God” aren’t accurately His (at the very least, not the way those 
 words are used today).
 
 I am certain that God does live and that He wants us to find him for ourselves. In fact I am certain that the way our existence is in this life 
