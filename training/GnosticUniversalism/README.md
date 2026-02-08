@@ -36,6 +36,6 @@ However, living this philosophy requires relentless effort. The "default mode" o
 ## Side-note:
 Help me to come up with a good name for this philosophy.
 
-There is a part of me that wants to call it Functional Communism, just to trigger those people that 
-find Communism a personal trigger word, though I think calling it Jesus-Panentheism could trigger more people no matter which side of the
-Jesus debate they are on.
+I had liked Gnostic Universalism, since first century Gnosticism was centered on knowing God and Christ through personal connection. Though I don't know how much of this is actually common with what they would have believed since most of what is written and known about them was written by those that killed them off.
+
+There is a part of me that wants to call it Functional Communism, just to trigger those people that find Communism a personal trigger word, though I think calling it Jesus-Panentheism could trigger more people no matter which side of the Jesus debate they are on.
