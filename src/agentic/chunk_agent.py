@@ -192,7 +192,7 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
     return neo4j_vector
 
 
-def init_from_existing(llm_model="glm-4.7-flash"):
+def init_from_existing(llm_model="glm4-tool:9b"):
     print("--- Starting ChunkRAG Pipeline ---")
    
     # Initialize the LLM (e.g., using OllamaLLM for a local model)
@@ -216,7 +216,7 @@ def init_from_existing(llm_model="glm-4.7-flash"):
 
 
 # --- Main RAG Pipeline ---
-def init_chunkrag_pipeline(document, llm_model="glm-4.7-flash"):
+def init_chunkrag_pipeline(document, llm_model="glm4-tool:9b"):
     """
     Implements the ChunkRAG pipeline.
     """
