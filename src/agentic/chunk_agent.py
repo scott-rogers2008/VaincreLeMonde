@@ -54,7 +54,7 @@ def llm_check_semantic_break(pre_sentence, post_sentence, llm):
         try:
             resp = to_boolean(response)
             valid_resp = True
-        except LookoupError as e:
+        except LookupError as e:  # Corrected typo from 'LookoupError' to 'LookupError'
             print(f"{e} -- trying again...")
             valid_resp = False
 
@@ -99,7 +99,8 @@ def graph_details(llm, graph, chunks, text_summary):
     """
     Filters chunks based on relevance to the query using an LLM.
     """
-   
+
+
     # Prompt template for relevance assessment
     template = """
     You analyze text to descover why the author chose to write a given scene. Given the summary of
@@ -109,19 +110,11 @@ def graph_details(llm, graph, chunks, text_summary):
     Scene: {chunk}
     Summary:
     """
-    nquery = """
-    CREATE(n:Summary {summary: $summary})
-    RETURN n
-    """
-    rquery = """
-    MATCH (a:Chunk {text: $text}), (b:Summary {summary: $summary})
-    CREATE (a)-[:CHUNK_SUMMARY]->(b)
-    RETURN a, b
-    """
 
 
     prompt = PromptTemplate(template=template, input_variables=["text_summary", "chunk"])
-    #llm_chain = LLMChain(prompt=prompt, llm=llm)
+
+
     llm_chain = (
         prompt  # Apply the prompt template
         | llm  # Use the language model to answer the question based on context
@@ -219,8 +212,8 @@ def init_chunkrag_pipeline(document, llm_model="glm4-tool:9b"):
     """
     Implements the ChunkRAG pipeline.
     """
-    print("--- Starting ChunkRAG Pipeline ---")
-   
+
+
     # Initialize the LLM (e.g., using OllamaLLM for a local model)
     ollama_llm = ChatOllama(model=llm_model)
 
