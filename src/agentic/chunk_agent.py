@@ -75,8 +75,8 @@ def semantic_chunking(document, llm, model_name='all-MiniLM-L6-v2', threshold=0.
     sentence_embeddings = model.encode(paragraphs, convert_to_tensor=True)
    
     # Calculate cosine similarity between consecutive paragraphs
-    cosine_similarities =[]
-    for i in range(len(paragraphs) -1):
+    cosine_similarities = []
+    for i in range(len(paragraphs) - 1):
         cosine_similarities.append(util.cos_sim(sentence_embeddings[i], sentence_embeddings[i+1]))
    
     # Identify chunk boundaries where similarity drops below the threshold
@@ -136,7 +136,7 @@ def graph_details(llm, graph, chunks, text_summary):
             graph.query(nquery, params={"summary":response})
             graph.query(rquery, params={"text":chunk, "summary":response})
         except ValueError:
-            print(f"Could find relevance score for chunk: {chunk} got response {response}")
+            print(f"Could not find relevance score for chunk: {chunk} got response {response}")
 
 
 
@@ -184,7 +184,6 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
     for i in range(len(chunks) - 1):
         graph.query(nquery, params={"seq":i, "source":metadata["source"], "next":i+1})
         graph.query(dquery, params={"seq":i, "source":metadata["source"]})
-
 
     graph.query(dquery, params={"seq":len(chunks)-1, "source":metadata["source"]})
 
@@ -315,4 +314,3 @@ if __name__ == "__main__":
     final_response = query_chunkrag_pipeline(neo4j_vector, llm, graph, user_query)
     print("\n--- Final Answer ---")
     print(final_response["output"])
-   
