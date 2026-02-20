@@ -41,8 +41,10 @@ if __name__ == "__main__":
     # Define the path to the agent module
     agent_module_path = 'src\agentic\chunk_agent.py'
 
-    # Set the base directory to the root of this repository
-    base_dir = 'D:/VaincreLeMond'
+    # Use get_git_root from src\agentic\utils.py to find the root of the git repository
+    from src.agentic.utils import get_git_root
+
+    base_dir = get_git_root()
 
     # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory
     event_handler = MDFileChangeHandler(agent_module_path, base_dir)
