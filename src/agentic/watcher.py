@@ -3,6 +3,8 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+from src.agentic.utils import get_git_root
+
 class MDFileChangeHandler(FileSystemEventHandler):
     def __init__(self, agent_module_path, base_dir):
         self.agent_module_path = agent_module_path
@@ -40,10 +42,6 @@ class MDFileChangeHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     # Define the path to the agent module
     agent_module_path = 'src\agentic\chunk_agent.py'
-
-    # Use get_git_root from src\agentic\utils.py to find the root of the git repository
-    from src.agentic.utils import get_git_root
-
     base_dir = get_git_root()
 
     # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory

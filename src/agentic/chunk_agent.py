@@ -12,6 +12,8 @@ from langchain_community.docstore.document import Document
 from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_classic.tools import Tool
 
+from src.agentic.utils import get_git_root
+
 # Set up Neo4j credentials
 neo4j_url = "neo4j://192.168.13.1:7687"
 username = "neo4j"
@@ -19,9 +21,6 @@ password = "password"
 
 base_dir = os.environ.get("BASE_DIR")
 if not base_dir or len(base_dir) == 0:
-    # Use get_git_root to find the root of the git repository
-    from src.agentic.utils import get_git_root
-
     base_dir = get_git_root()
 
 # --- Step 1: Semantic Chunking ---
