@@ -14,10 +14,10 @@ from langchain_classic.tools import Tool
 
 from src.agentic.utils import get_git_root
 
-# Set up Neo4j credentials
-neo4j_url = "neo4j://192.168.13.1:7687"
-username = "neo4j"
-password = "password"
+# Set up Neo4j credentials from environment variables
+neo4j_url = os.environ.get("NEO4J_URL")
+username = os.environ.get("NEO4J_USERNAME")
+password = os.environ.get("NEO4J_PASSWORD")
 
 base_dir = os.environ.get("BASE_DIR")
 if not base_dir or len(base_dir) == 0:
