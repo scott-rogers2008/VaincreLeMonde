@@ -34,14 +34,15 @@ class MDFileChangeHandler(FileSystemEventHandler):
             "type": "Text"
         }
         chunks, _ = agent_module.init_chunkrag_pipeline(document_text)
-        agent_module.neo4j_nodes_and_relations(None, chunks, metadata)  # Pass None for graph as it's not defined in this module
+        graph = Neo4jGraph(url=os.environ.get("NEO4J_URL"), username=os.environ.get("NEO4J_USERNAME"), password=os.environ.get("NEO4J_PASSWORD"))
+        agent_module.neo4j_nodes_and_relations(graph, chunks, metadata)
 
 if __name__ == "__main__":
     # Define the path to the agent module
     agent_module_path = 'src\agentic\chunk_agent.py'
 
     # Define the base directory to monitor
-    base_dir = 'D:/VaincreLeMonde'
+    base_dir = '/path/to/your/repo'
 
     # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory
     event_handler = MDFileChangeHandler(agent_module_path, base_dir)
