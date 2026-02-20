@@ -34,7 +34,7 @@ class MDFileChangeHandler(FileSystemEventHandler):
             "type": "Text"
         }
         chunks, _ = agent_module.init_chunkrag_pipeline(document_text)
-        agent_module.neo4j_nodes_and_relations(graph, chunks, metadata)
+        agent_module.neo4j_nodes_and_relations(None, chunks, metadata)  # Pass None for graph as it's not defined in this module
 
 if __name__ == "__main__":
     # Define the path to the agent module
