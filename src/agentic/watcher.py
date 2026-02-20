@@ -2,6 +2,7 @@ import os
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from langchain_neo4j import Neo4jGraph
 
 from src.agentic.utils import get_git_root
 
