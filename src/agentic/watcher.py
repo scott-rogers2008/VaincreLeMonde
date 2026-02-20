@@ -41,7 +41,7 @@ if __name__ == "__main__":
     agent_module_path = 'src\agentic\chunk_agent.py'
 
     # Define the base directory to monitor
-    base_dir = '/path/to/your/repo'
+    base_dir = 'D:/VaincreLeMonde'
 
     # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory
     event_handler = MDFileChangeHandler(agent_module_path, base_dir)
