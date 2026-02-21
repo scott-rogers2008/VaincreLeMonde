@@ -1,22 +1,18 @@
 import os
-import time
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from langchain_neo4j import Neo4jGraph
+from src.agentic.utils import get_git_root
 
-from utils import get_git_root
-
-class MDFileChangeHandler(FileSystemEventHandler):
-    def __init__(self, agent_module_path, base_dir):
+class MDFileChangeHandler:
+    def __init__(self, agent_module_path):
         self.agent_module_path = agent_module_path
-        self.base_dir = base_dir
 
-    def on_modified(self, event):
-        if event.is_directory:
-            return
-        elif event.src_path.endswith('.md'):
-            print(f"Detected change in {event.src_path}")
-            self.process_md_file(event.src_path)
+    def sync_all(self):
+        base_dir = get_git_root(os.curdir)
+        for root, dirs, files in os.walk(base_dir):
+            for file in files:
+                if file.endswith('.md'):
+                    md_file_path = os.path.join(root, file)
+                    print(f"Processing {md_file_path}")
+                    self.process_md_file(md_file_path)
 
     def process_md_file(self, md_file_path):
         # Import the necessary functions from the agent module
@@ -29,13 +25,15 @@ class MDFileChangeHandler(FileSystemEventHandler):
         with open(md_file_path, 'r', encoding='utf-8') as f:
             document_text = f.read()
 
-        # Call the semantic_chunking and neo4j_nodes_and_relations functions
+        # Import metadata from folder name
         metadata = {
             "source": "local",
             "title": os.path.basename(md_file_path).split('.')[0],
             "author": "Unknown",
-            "type": "Text"
+            "type": os.path.basename(os.path.dirname(md_file_path))
         }
+
+        # Call the semantic_chunking and neo4j_nodes_and_relations functions
         chunks, _ = agent_module.init_chunkrag_pipeline(document_text)
         graph = Neo4jGraph(url=os.environ.get("NEO4J_URL"), username=os.environ.get("NEO4J_USERNAME"), password=os.environ.get("NEO4J_PASSWORD"))
         agent_module.neo4j_nodes_and_relations(graph, chunks, metadata)
@@ -43,19 +41,9 @@ class MDFileChangeHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     # Define the path to the agent module
     agent_module_path = 'src\agentic\chunk_agent.py'
-    base_dir = get_git_root(os.curdir)
 
-    # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory
-    event_handler = MDFileChangeHandler(agent_module_path, base_dir)
+    # Create an instance of MDFileChangeHandler and pass it the agent module path
+    md_file_change_handler = MDFileChangeHandler(agent_module_path)
 
-    # Set up the observer with the event handler
-    observer = Observer()
-    observer.schedule(event_handler, base_dir, recursive=True)
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+    # Sync all .md files in the repository root
+    md_file_change_handler.sync_all()
