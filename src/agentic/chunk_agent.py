@@ -139,8 +139,13 @@ def graph_details(llm, graph, chunks, text_summary):
 def neo4j_nodes_and_relations(graph, chunks, metadata):
     docs = []
     seq = 0
+    unique_chunk_ids = {}
     for chunk in chunks:
-        metadata["chunk_id"] = seq
+        # Generate a unique ID for each chunk
+        filename = os.path.basename(metadata["source"])
+        unique_id = f"{filename}_chunk_{seq}"
+        unique_chunk_ids[unique_id] = chunk
+        metadata["chunk_id"] = unique_id
         docs.append(Document(page_content=chunk, metadata=metadata))
         seq += 1
        
@@ -157,6 +162,18 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
         index_name="vector_index", # Optional: specify index name
     )
 
+
+    # Extract keywords or entities from each chunk
+    for chunk_id, chunk in unique_chunk_ids.items():
+        keywords = extract_keywords(chunk)
+        for keyword in keywords:
+            # Create a central 'Keyword' node if it doesn't exist
+            keyword_node = graph.query(f"MATCH (k:Keyword {{name: '{keyword}'}}) RETURN k", params={"keyword": keyword})
+            if not keyword_node:
+                graph.query(f"CREATE (k:Keyword {{name: '{keyword}'}})", params={"keyword": keyword})
+
+            # Create a relationship between the chunk and the 'Keyword' node
+            graph.query(f"MATCH (c:Chunk {{chunk_id: '{chunk_id}'}}), (k:Keyword {{name: '{keyword}'}}) MERGE (c)-[:MENTIONS]->(k)", params={"chunk_id": chunk_id, "keyword": keyword})
 
     # Now connect each of these chunks to gether and to a new node called Document
     nquery = """
@@ -186,27 +203,11 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
     return neo4j_vector
 
 
-def init_from_existing(llm_model="glm4-tool:9b"):
-    print("--- Starting ChunkRAG Pipeline ---")
-   
-    # Initialize the LLM (e.g., using OllamaLLM for a local model)
-    ollama_llm = ChatOllama(model=llm_model)
-
-
-    # Create the embedder instance
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
-
-
-    # Create or connect to Neo4jVector store
-    neo4j_vector = Neo4jVector.from_existing_index(
-        embedding=embeddings,
-        url=neo4j_url,
-        username=username,
-        password=password,
-        index_name="vector_index", # Optional: specify index name
-    )
-   
-    return ollama_llm, neo4j_vector
+def extract_keywords(text):
+    # Use a simple keyword extraction method (e.g., NLTK)
+    tokens = nltk.word_tokenize(text)
+    keywords = set(tokens)
+    return list(keywords)
 
 
 # --- Main RAG Pipeline ---
