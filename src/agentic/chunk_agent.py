@@ -1,6 +1,7 @@
 import requests
 import nltk
 import os
+import numpy as np
 from bs4 import BeautifulSoup as bs
 from sentence_transformers import SentenceTransformer, util
 from langchain_core.output_parsers import StrOutputParser
@@ -13,6 +14,9 @@ from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_classic.tools import Tool
 
 from utils import get_git_root
+
+MIN_CHUNK_CHARS = 400   # Don't split too early (~100 tokens)
+MAX_CHUNK_CHARS = 3000  # Safety valve (~750 tokens)
 
 # Set up Neo4j credentials from environment variables
 neo4j_url = os.environ.get("NEO4J_URL")
@@ -36,45 +40,48 @@ def to_boolean(llm_response):
 
 
 def llm_check_semantic_break(pre_sentence, post_sentence, llm):
-    template = """
-    You are a relevance evaluator. Your task is to determine if there is logical break in semantics given two sections and only answer with a "yes" or a "no".
-   
-    Query: Based on the provided text, Is there a clear change in theme or all of the following: a new physical location, a notable passage of time, or a switching of characters occur here and are either of the sections small on their own (i.e. only one sentence long)? Answer "yes" or "no".
-    section1: {section1}
-    section2: {section2}
-    """
-    valid_resp = False
-    resp = False
-    while not valid_resp:
-        prompt = PromptTemplate(template=template, input_variables=["section1", "section2"])
-        llm_chain = (
-            prompt  # Apply the prompt template
-            | llm  # Use the language model to answer the question based on context
-            | StrOutputParser()  # Parse the model's response as a string
-        )
-        response = llm_chain.invoke({"section1":pre_sentence, "section2":post_sentence})
-        try:
-            resp = to_boolean(response)
-            valid_resp = True
-        except LookupError as e:  # Corrected typo from 'LookoupError' to 'LookupError'
-            print(f"{e} -- trying again...")
-            valid_resp = False
+    # 1. Pre-check: Don't waste LLM time if the text is empty
+    if not pre_sentence.strip() or not post_sentence.strip():
+        return False
+
+    template = """Analyze if Section 2 marks a clear semantic break (new topic, time, or place) from Section 1. 
+    Respond ONLY with 'yes' or 'no'.
+    
+    Section 1: {section1}
+    Section 2: {section2}
+    
+    Break:"""
+    
+    prompt = PromptTemplate(template=template, input_variables=["section1", "section2"])
+    chain = prompt | llm | StrOutputParser()
+    
+    # Try a limited number of times to avoid infinite loops on your 3060
+    for attempt in range(2):
+        response = chain.invoke({"section1": pre_sentence, "section2": post_sentence}).strip().lower()
+        
+        if 'yes' in response[:5]: # Check the start of the string
+            return True
+        if 'no' in response[:5]:
+            return False
+            
+    return False # Default to 'no' (keep chunks together) if LLM is confused
 
 
-    return resp
-
-
-def semantic_chunking(document, llm, model_name='all-MiniLM-L6-v2', threshold=0.4):
+def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5', sensitivity=1.3):
     """
     Chunks a document into semantically coherent sections.
+
+    sensitivity = 1.5 # a good starting point for nomic (higher multiplier = larger chunks / fewer breaks)
     """
     # Tokenize the document into paragraphs
     paragraphs_unfilt = document.split('\n')
     paragraphs = [item for item in paragraphs_unfilt if item] #remove empty
    
     # Load a pre-trained embedding model
-    model = SentenceTransformer(model_name)
-    sentence_embeddings = model.encode(paragraphs, convert_to_tensor=True)
+    model = SentenceTransformer(model_name, trust_remote_code=True)
+    # prefix needed for nomic-embed similarity
+    prefixed_section = [f"search_document: {s}" for s in paragraphs]
+    sentence_embeddings = model.encode(prefixed_section, normalize_embeddings=True, convert_to_tensor=True)
    
     # Calculate cosine similarity between consecutive paragraphs
     cosine_similarities = []
@@ -83,14 +90,26 @@ def semantic_chunking(document, llm, model_name='all-MiniLM-L6-v2', threshold=0.
    
     # Identify chunk boundaries where similarity drops below the threshold
     chunks = []
+    sims = [s.item() for s in cosine_similarities]
+    mean_sim = np.mean(sims)
+    std_sim = np.std(sims)
+    dynamic_threshold = mean_sim - (sensitivity * std_sim)
+
     current_chunk = [paragraphs[0]]
     for i in range(len(paragraphs) - 1):
-        if cosine_similarities[i].item() < threshold and llm_check_semantic_break(current_chunk, paragraphs[i+1], llm):
-            # End the current chunk and start a new one
-            chunks.append("\n".join(current_chunk))
-            current_chunk = [paragraphs[i+1]]
-        else:
-            current_chunk.append(paragraphs[i+1])
+        current_len = len(current_chunk)
+        if current_len > MAX_CHUNK_CHARS:
+                chunks.append("\n".join(current_chunk))
+                current_chunk = [paragraphs[i+1]]
+        elif current_len > MIN_CHUNK_CHARS:
+            if cosine_similarities[i].item() < dynamic_threshold:
+                if llm_check_semantic_break(current_chunk, paragraphs[i+1], llm):
+                    # End the current chunk and start a new one
+                    chunks.append("\n".join(current_chunk))
+                    current_chunk = [paragraphs[i+1]]
+            else:
+                current_chunk.append(paragraphs[i+1])
+                
     chunks.append("\n".join(current_chunk)) # Add the last chunk
    
     print(f"{len(chunks)} - chunks detected from {len(paragraphs)} paragraphs")
@@ -129,7 +148,6 @@ def graph_details(llm, graph, chunks, text_summary):
         response = llm_chain.invoke({"text_summary":text_summary, "chunk":chunk})
         try:
             graph.query(nquery, params={"summary":response})
-            graph.query(rquery, params={"text":chunk, "summary":response})
         except ValueError:
             print(f"Could not find relevance score for chunk: {chunk} got response {response}")
 
@@ -139,13 +157,11 @@ def graph_details(llm, graph, chunks, text_summary):
 def neo4j_nodes_and_relations(graph, chunks, metadata):
     docs = []
     seq = 0
-    unique_chunk_ids = {}
     for chunk in chunks:
-        # Generate a unique ID for each chunk
-        filename = os.path.basename(metadata["source"])
-        unique_id = f"{filename}_chunk_{seq}"
-        unique_chunk_ids[unique_id] = chunk
-        metadata["chunk_id"] = unique_id
+        source = metadata["source"]
+        title = metadata["title"]
+        unique_id = f"{source}_{title}_chunk_{seq}"
+        metadata["chunk_order"] = seq
         docs.append(Document(page_content=chunk, metadata=metadata))
         seq += 1
        
@@ -162,20 +178,7 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
         index_name="vector_index", # Optional: specify index name
     )
 
-
-    # Extract keywords or entities from each chunk
-    for chunk_id, chunk in unique_chunk_ids.items():
-        keywords = extract_keywords(chunk)
-        for keyword in keywords:
-            # Create a central 'Keyword' node if it doesn't exist
-            keyword_node = graph.query(f"MATCH (k:Keyword {{name: '{keyword}'}}) RETURN k", params={"keyword": keyword})
-            if not keyword_node:
-                graph.query(f"CREATE (k:Keyword {{name: '{keyword}'}})", params={"keyword": keyword})
-
-            # Create a relationship between the chunk and the 'Keyword' node
-            graph.query(f"MATCH (c:Chunk {{chunk_id: '{chunk_id}'}}), (k:Keyword {{name: '{keyword}'}}) MERGE (c)-[:MENTIONS]->(k)", params={"chunk_id": chunk_id, "keyword": keyword})
-
-    # Now connect each of these chunks to gether and to a new node called Document
+    # Create the base document node
     nquery = """
     CREATE (n:Document {title: $title, author: $author, source: $source})
     RETURN n
@@ -183,30 +186,39 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
     graph.query(nquery, params={"title":metadata["title"],
                                 "author":metadata["author"],
                                 "source": metadata["source"]})
+    
     nquery = """
-    MATCH (a:Chunk {chunk_id: $seq, source: $source}), (b:Chunk {chunk_id: $next, source: $source})
+    MATCH (a:Chunk {chunk_order: $seq, title: $title, source: $source}), (b:Chunk {chunk_order: $next, title: $title, source: $source})
     CREATE (a)-[:NEXT_CHUNK]->(b)
     RETURN a, b
     """
     dquery = """
-    MATCH (a:Chunk {chunk_id: $seq, source: $source}), (b:Document {source: $source})
+    MATCH (a:Chunk {chunk_order: $seq, title: $title, source: $source}), (b:Document {source: $source, title: $title})
     CREATE (a)-[:FROM_DOCUMENT]->(b)
     RETURN a, b
     """
-    for i in range(len(chunks) - 1):
-        graph.query(nquery, params={"seq":i, "source":metadata["source"], "next":i+1})
-        graph.query(dquery, params={"seq":i, "source":metadata["source"]})
 
-    graph.query(dquery, params={"seq":len(chunks)-1, "source":metadata["source"]})
+    # Extract keywords or entities from each chunk and connect nodes
+    for i in range(len(chunks)):
+        graph.query(dquery, params={"seq":i, "title":metadata["title"], "source":metadata["source"]})
+        if i < len(chunks) - 1:
+            graph.query(nquery, params={"seq":i, "title":metadata["title"], "source":metadata["source"], "next":i+1})
+        keywords = extract_keywords(chunks[i])
+        for keyword in keywords:
+            # Create a central 'Keyword' node if it doesn't exist
+            keyword_node = graph.query(f"MATCH (k:Keyword {{name: '{keyword}'}}) RETURN k", params={"keyword": keyword})
+            if not keyword_node:
+                graph.query(f"CREATE (k:Keyword {{name: '{keyword}'}})", params={"keyword": keyword})
 
+            # Create a relationship between the chunk and the 'Keyword' node
+            graph.query(f"MATCH (c:Chunk {{unique_id: '{unique_id}'}}), (k:Keyword {{name: '{keyword}'}}) MERGE (c)-[:MENTIONS]->(k)", params={"unique_id": unique_id, "keyword": keyword})
 
     return neo4j_vector
 
 
 def extract_keywords(text):
-    # Use a simple keyword extraction method (e.g., NLTK)
-    tokens = nltk.word_tokenize(text)
-    keywords = set(tokens)
+    # Return empty set for now.
+    keywords = []
     return list(keywords)
 
 

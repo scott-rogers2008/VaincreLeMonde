@@ -1,5 +1,8 @@
 import os
-from src.agentic.utils import get_git_root
+from langchain_neo4j import Neo4jGraph
+from utils import get_git_root
+
+os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.venv', '.vs',  '.vscode', 'node_modules'}
 
 class MDFileChangeHandler:
     def __init__(self, agent_module_path):
@@ -7,8 +10,11 @@ class MDFileChangeHandler:
 
     def sync_all(self):
         base_dir = get_git_root(os.curdir)
-        for root, dirs, files in os.walk(base_dir):
+        for root, dirs, files in os.walk(base_dir, topdown=True):
+            dirs[:] = [d for d in dirs if d not in os_walk_exclude]
             for file in files:
+                if ".aider" in file:
+                    continue
                 if file.endswith('.md'):
                     md_file_path = os.path.join(root, file)
                     print(f"Processing {md_file_path}")
@@ -28,7 +34,7 @@ class MDFileChangeHandler:
         # Import metadata from folder name
         metadata = {
             "source": "local",
-            "title": os.path.basename(md_file_path).split('.')[0],
+            "title": md_file_path,
             "author": "Unknown",
             "type": os.path.basename(os.path.dirname(md_file_path))
         }
@@ -40,7 +46,7 @@ class MDFileChangeHandler:
 
 if __name__ == "__main__":
     # Define the path to the agent module
-    agent_module_path = 'src\agentic\chunk_agent.py'
+    agent_module_path = 'src/agentic/chunk_agent.py'
 
     # Create an instance of MDFileChangeHandler and pass it the agent module path
     md_file_change_handler = MDFileChangeHandler(agent_module_path)
