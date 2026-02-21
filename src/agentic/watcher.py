@@ -4,7 +4,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from langchain_neo4j import Neo4jGraph
 
-from src.agentic.utils import get_git_root
+from utils import get_git_root
 
 class MDFileChangeHandler(FileSystemEventHandler):
     def __init__(self, agent_module_path, base_dir):
@@ -43,7 +43,7 @@ class MDFileChangeHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     # Define the path to the agent module
     agent_module_path = 'src\agentic\chunk_agent.py'
-    base_dir = get_git_root()
+    base_dir = get_git_root(os.curdir)
 
     # Create an instance of the MDFileChangeHandler and pass it the agent module path and base directory
     event_handler = MDFileChangeHandler(agent_module_path, base_dir)
