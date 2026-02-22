@@ -1,3 +1,9 @@
+###
+### loader.py -- loads all of the md files into neo4j graphs preperatory for other agents to use it as a graphRAG
+###      it uses chunk_agent.py to break up the md files into semantic chunks to help facilitate vector searches
+###      and utils has (or will have) useful utilities like get_git_root(<path>) to help find all the files to be loaded.
+###
+
 import os
 from langchain_neo4j import Neo4jGraph
 from utils import get_git_root
