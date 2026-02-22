@@ -15,8 +15,8 @@ from langchain_classic.tools import Tool
 
 from utils import get_git_root
 
-MIN_CHUNK_CHARS = 400   # Don't split too early (~100 tokens)
-MAX_CHUNK_CHARS = 3000  # Safety valve (~750 tokens)
+MIN_CHUNK_CHARS = 400   # Don't split too early 
+MAX_CHUNK_CHARS = 2000  # Safety valve (~500 tokens)
 
 # Set up Neo4j credentials from environment variables
 neo4j_url = os.environ.get("NEO4J_URL")
@@ -44,13 +44,20 @@ def llm_check_semantic_break(pre_sentence, post_sentence, llm):
     if not pre_sentence.strip() or not post_sentence.strip():
         return False
 
-    template = """Analyze if Section 2 marks a clear semantic break (new topic, time, or place) from Section 1. 
-    Respond ONLY with 'yes' or 'no'.
-    
-    Section 1: {section1}
-    Section 2: {section2}
-    
-    Break:"""
+    template = """
+        You are an expert document architect. Your task is to determine if Section 2 starts a 
+        significantly different topic than Section 1.
+
+        Section 1: {section1}
+        Section 2: {section2}
+
+        Think step-by-step:
+        1. What is the primary theme of Section 1?
+        2. What is the primary theme of Section 2?
+        3. Is there a logical transition?
+
+        If it's a new topic, say 'Decision: YES'. If it's a continuation, say 'Decision: NO'.
+        """
     
     prompt = PromptTemplate(template=template, input_variables=["section1", "section2"])
     chain = prompt | llm | StrOutputParser()
@@ -59,15 +66,15 @@ def llm_check_semantic_break(pre_sentence, post_sentence, llm):
     for attempt in range(2):
         response = chain.invoke({"section1": pre_sentence, "section2": post_sentence}).strip().lower()
         
-        if 'yes' in response[:5]: # Check the start of the string
+        if 'yes' in response.split('\n')[-1] or 'yes' in response: # Check the start of the string
             return True
-        if 'no' in response[:5]:
+        if 'no' in response.split('\n')[-1] or 'no' in response[:20]:
             return False
             
     return False # Default to 'no' (keep chunks together) if LLM is confused
 
 
-def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5', sensitivity=1.3):
+def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5', sensitivity=0.9):
     """
     Chunks a document into semantically coherent sections.
 
@@ -80,7 +87,7 @@ def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5'
     # Load a pre-trained embedding model
     model = SentenceTransformer(model_name, trust_remote_code=True)
     # prefix needed for nomic-embed similarity
-    prefixed_section = [f"search_document: {s}" for s in paragraphs]
+    prefixed_section = [f"clustering: {s}" for s in paragraphs]
     sentence_embeddings = model.encode(prefixed_section, normalize_embeddings=True, convert_to_tensor=True)
    
     # Calculate cosine similarity between consecutive paragraphs
@@ -97,19 +104,22 @@ def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5'
 
     current_chunk = [paragraphs[0]]
     for i in range(len(paragraphs) - 1):
-        current_len = len(current_chunk)
+        # get length of current chunk in characters
+        current_len = len("\n".join(current_chunk))
         if current_len > MAX_CHUNK_CHARS:
                 chunks.append("\n".join(current_chunk))
                 current_chunk = [paragraphs[i+1]]
         elif current_len > MIN_CHUNK_CHARS:
             if cosine_similarities[i].item() < dynamic_threshold:
-                if llm_check_semantic_break(current_chunk, paragraphs[i+1], llm):
+                if llm_check_semantic_break("\n".join(current_chunk), paragraphs[i+1], llm):
                     # End the current chunk and start a new one
                     chunks.append("\n".join(current_chunk))
                     current_chunk = [paragraphs[i+1]]
             else:
                 current_chunk.append(paragraphs[i+1])
-                
+        else:
+            current_chunk.append(paragraphs[i+1])
+
     chunks.append("\n".join(current_chunk)) # Add the last chunk
    
     print(f"{len(chunks)} - chunks detected from {len(paragraphs)} paragraphs")

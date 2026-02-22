@@ -2,7 +2,7 @@ import os
 from langchain_neo4j import Neo4jGraph
 from utils import get_git_root
 
-os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.venv', '.vs',  '.vscode', 'node_modules'}
+os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules'}
 
 class MDFileChangeHandler:
     def __init__(self, agent_module_path):
