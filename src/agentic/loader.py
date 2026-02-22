@@ -8,7 +8,8 @@ import os
 from langchain_neo4j import Neo4jGraph
 from utils import get_git_root
 
-os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules'}
+os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules', 'src'}
+# Note that 'src' is only a temporary exclution, since there aren't any documents beyond that point that I'm ready to include
 
 # Get neo4j credentials from environment variables
 url=os.environ.get("NEO4J_URL")
