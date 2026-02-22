@@ -10,23 +10,49 @@ from utils import get_git_root
 
 os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules'}
 
+# Get neo4j credentials from environment variables
+url=os.environ.get("NEO4J_URL")
+username=os.environ.get("NEO4J_USERNAME")
+password=os.environ.get("NEO4J_PASSWORD")
+
 class MDFileChangeHandler:
     def __init__(self, agent_module_path):
         self.agent_module_path = agent_module_path
 
     def sync_all(self):
         base_dir = get_git_root(os.curdir)
+        graph = Neo4jGraph(url=url, username=username, password=password)
+
         for root, dirs, files in os.walk(base_dir, topdown=True):
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
+
+            # 1. Create the Directory Backbone
+            for d in dirs:
+                dir_path = os.path.join(root, d)
+                parent_path = root
+                
+                # Cypher to link folder to its parent
+                query = """
+                MERGE (p:Directory {path: $parent_path})
+                MERGE (c:Directory {path: $child_path})
+                SET c.name = $name
+                MERGE (c)-[:CHILD_OF]->(p)
+                """
+                graph.query(query, {
+                    "parent_path": parent_path, 
+                    "child_path": dir_path, 
+                    "name": d
+                })
+
             for file in files:
                 if ".aider" in file:
                     continue
                 if file.endswith('.md'):
                     md_file_path = os.path.join(root, file)
                     print(f"Processing {md_file_path}")
-                    self.process_md_file(md_file_path)
+                    self.process_md_file(md_file_path, graph, root)
 
-    def process_md_file(self, md_file_path):
+    def process_md_file(self, md_file_path, graph, parent_path):
         # Import the necessary functions from the agent module
         import importlib.util
         spec = importlib.util.spec_from_file_location("agent_module", self.agent_module_path)
@@ -39,7 +65,7 @@ class MDFileChangeHandler:
 
         # Import metadata from folder name
         metadata = {
-            "source": "local",
+            "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
             "title": md_file_path,
             "author": "Unknown",
             "type": os.path.basename(os.path.dirname(md_file_path))
@@ -47,8 +73,22 @@ class MDFileChangeHandler:
 
         # Call the semantic_chunking and neo4j_nodes_and_relations functions
         chunks, _ = agent_module.init_chunkrag_pipeline(document_text)
-        graph = Neo4jGraph(url=os.environ.get("NEO4J_URL"), username=os.environ.get("NEO4J_USERNAME"), password=os.environ.get("NEO4J_PASSWORD"))
+        graph = Neo4jGraph(url=url, username=username, password=password)
         agent_module.neo4j_nodes_and_relations(graph, chunks, metadata)
+
+        # Link the Directory to the File created by the agent
+        # We use MERGE on both to ensure we don't duplicate, 
+        # but the Directory should already exist from sync_all.
+        link_query = """
+        MATCH (d:Directory {path: $parent_path})
+        MATCH (f:Document {source: $source, title: $file_path})
+        MERGE (f)-[:CHILD_OF]->(d)
+        """
+        graph.query(link_query, {
+            "parent_path": parent_path, 
+            "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
+            "file_path": md_file_path
+        })
 
 if __name__ == "__main__":
     # Define the path to the agent module
