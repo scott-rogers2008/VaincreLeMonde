@@ -69,7 +69,7 @@ cypher_chain = GraphCypherQAChain.from_llm(
 cypher_search_tool = Tool(
     name="Graph_Search",
     func=cypher_chain.run,
-    description="Answer basic questions."
+    description="Answer questions based on knowledge graph aquired so far."
 )
 
 chathistory = InMemoryChatMessageHistory()
@@ -78,10 +78,15 @@ agent = create_tool_calling_agent(
     llm=model, 
     tools=[vector_search_tool, cypher_search_tool, search, browser, extract, fread, fwrite, list_directory], 
     prompt=ChatPromptTemplate.from_messages([
-        ("system", "Your a helpful agent with access to local documents about learning and the chunks that they've been devided into, "
-         "you can also agment your knowledge by searching the internet and read and write text files. "
+        ("system", "Your a knowledge and learning expert with access to local knowledgebase of documents of what has been "
+         "aquired so far about knowledge and learning as well as the chunks that these documents have been devided into through neo4j. "
+         "You can also augment your knowledge by searching the internet and reading and writing to local text files. "
          ""
-         "Use the vector_search_tool and cypher_search_tool to access aquired knowledge about learning."
+         "Think step-by-step:"
+         "1. Use the the neo4j Graph_Search and Vector_Search tools to access aquired knowledge as a basis for responses"
+         "2. Check the internet for aditional information that might be useful and or use other tools as required by the specific request."
+         ""
+         "First use the neo4j Vector_Search and Graph_Search to access aquired knowledge about knowledge and learning as a basis for responses."
          "Use the DuckDuckGo Search tool for searching the internet."
          "You can also extract information from the internet using the navigate_browser and extract_text tool."
          "Use the read_file tool to get the specifics from the file contents, don't rely on assumptions."
