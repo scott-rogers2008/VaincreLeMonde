@@ -8,6 +8,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_classic.tools import Tool
+import langchain
+langchain.verbose = True
 
 import os
 import nest_asyncio
@@ -18,7 +20,7 @@ neo4j_url = os.environ.get("NEO4J_URL")
 username = os.environ.get("NEO4J_USERNAME")
 password = os.environ.get("NEO4J_PASSWORD")
 
-model = ChatOllama(model="glm4-tool:9b")
+model = ChatOllama(model="llama3.1")
 search = DuckDuckGoSearchRun()
 syncBrowser = create_sync_playwright_browser()
 asyncBrowser = create_async_playwright_browser()
@@ -48,10 +50,22 @@ neo4j_vector = Neo4jVector.from_existing_index(
     text_node_property="text"
 )
 
+def debug_vector_search(query):
+    print(f"\n--- DEBUG: Vector Search Query: {query} ---")
+    results = neo4j_vector.as_retriever().invoke(query)
+    
+    # Print what was found so YOU can see it
+    if not results:
+        print("--- DEBUG: No results found in Vector Index! ---")
+    for i, res in enumerate(results):
+        print(f"Result {i+1}: {res.page_content[:200]}...") # Print first 200 chars
+        
+    return results
+
 vector_search_tool = Tool(
     name="Vector_Search",
-    func=neo4j_vector.as_retriever().invoke,
-    description="You are able to analyze text that has been chunked for easier access and utilize the metadata associated with it."
+    func=debug_vector_search, # Use our new wrapper
+    description="Primary tool for accessing the knowledge base chunks."
 )
 
 
@@ -74,33 +88,28 @@ cypher_search_tool = Tool(
 
 chathistory = InMemoryChatMessageHistory()
 
+all_tools = [vector_search_tool, cypher_search_tool]
+model_with_tools = model.bind_tools(all_tools)
+
+prompt_template = ChatPromptTemplate.from_messages([
+        ("system", "You are a knowledge base that lets the user interact with the documents contianed through the Vector_Search and "
+        "Graph_Search tools. ... Always start with Vector_Search even for ambiguous questions, and only ask for clarification "
+        "**after** retrieving partial results.."),
+    ("placeholder", "{chat_history}"),
+    ("user", "{input}"),
+    ("placeholder", "{agent_scratchpad}"),
+])
+
 agent = create_tool_calling_agent(
-    llm=model, 
-    tools=[vector_search_tool, cypher_search_tool, search, browser, extract, fread, fwrite, list_directory], 
-    prompt=ChatPromptTemplate.from_messages([
-        ("system", "Your a knowledge and learning expert with access to local knowledgebase of documents of what has been "
-         "aquired so far about knowledge and learning as well as the chunks that these documents have been devided into through neo4j. "
-         "You can also augment your knowledge by searching the internet and reading and writing to local text files. "
-         ""
-         "Think step-by-step:"
-         "1. Use the the neo4j Graph_Search and Vector_Search tools to access aquired knowledge as a basis for responses"
-         "2. Check the internet for aditional information that might be useful and or use other tools as required by the specific request."
-         ""
-         "First use the neo4j Vector_Search and Graph_Search to access aquired knowledge about knowledge and learning as a basis for responses."
-         "Use the DuckDuckGo Search tool for searching the internet."
-         "You can also extract information from the internet using the navigate_browser and extract_text tool."
-         "Use the read_file tool to get the specifics from the file contents, don't rely on assumptions."
-         "You can also use the list_directory to see what files you can access."),
-        ("placeholder","{chat_history}"),
-        ("human","{input}"),
-        ("placeholder","{agent_scratchpad}"),
-    ])
+    llm=model_with_tools, 
+    tools=all_tools, 
+    prompt=prompt_template
 )
 
 executor = AgentExecutor(
-    name="Internet Agent",
+    name="Multifaceted Agent",
     agent=agent, 
-    tools=[search, browser, extract, fread, fwrite, list_directory], 
+    tools=all_tools, 
     verbose=True
 )
 
