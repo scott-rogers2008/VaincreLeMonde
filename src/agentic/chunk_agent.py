@@ -190,11 +190,12 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
 
     # Create the base document node
     nquery = """
-    CREATE (n:Document {title: $title, author: $author, source: $source})
+    CREATE (n:Document {title: $title, author: $author, path: $path, source: $source})
     RETURN n
     """
     graph.query(nquery, params={"title":metadata["title"],
                                 "author":metadata["author"],
+                                "path":metadata["path"],
                                 "source": metadata["source"]})
     
     nquery = """

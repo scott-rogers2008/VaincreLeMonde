@@ -67,6 +67,7 @@ class MDFileChangeHandler:
         # Import metadata from folder name
         metadata = {
             "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
+            "path": parent_path,
             "title": md_file_path,
             "author": "Unknown",
             "type": os.path.basename(os.path.dirname(md_file_path))
