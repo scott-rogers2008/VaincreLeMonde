@@ -1,8 +1,8 @@
 ## Where to Start: What should my first goals be?
 
 Once you understand why goals are necessary, and some of the basic mechanics of setting and measuring goals ( 
-[Setting and Reaching Goals](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/SettingAndReachingGoals.md), 
-[Forming Habits](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/FormingHabits.md) )
+[Setting and Reaching Goals](/goals/SettingAndReachingGoals.md), 
+[Forming Habits](/goals/FormingHabits.md) )
 we need to start working on those things that will help us make reaching goals easier. So let's look at some of the traits or habits that we may
 need to start with.
 
@@ -40,8 +40,8 @@ being.
 - Kind
 - Resourceful
 
-Pick one or two to start with and use the [habit checklist form](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/habit_goal_form.pdf)
-to track your progress. Also pick an [achivement goal](https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/achivement_goal_form.pdf) like
+Pick one or two to start with and use the [habit checklist form](/goals/habit_goal_form.pdf)
+to track your progress. Also pick an [achivement goal](/goals/achivement_goal_form.pdf) like
 learning a new language or building a new project ( you can look at my examples of what I'm currently working on https://github.com/scott-rogers2008/VaincreLeMonde/blob/main/goals/current as an example ). As you track your progress think about what attributes you might need to work on next
 or shift to.
 
