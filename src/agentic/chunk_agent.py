@@ -1,5 +1,4 @@
-import requests
-import nltk
+import re
 import os
 import numpy as np
 from bs4 import BeautifulSoup as bs
@@ -17,6 +16,8 @@ from utils import get_git_root
 
 MIN_CHUNK_CHARS = 400   # Don't split too early 
 MAX_CHUNK_CHARS = 2000  # Safety valve (~500 tokens)
+
+LINK_PATTERN = r'\[\[(.*?)\]\]|\[.*?\]\((.*?\.md)\)'
 
 # Set up Neo4j credentials from environment variables
 neo4j_url = os.environ.get("NEO4J_URL")
@@ -162,8 +163,6 @@ def graph_details(llm, graph, chunks, text_summary):
             print(f"Could not find relevance score for chunk: {chunk} got response {response}")
 
 
-
-
 def neo4j_nodes_and_relations(graph, chunks, metadata):
     docs = []
     seq = 0
@@ -190,13 +189,15 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
 
     # Create the base document node
     nquery = """
-    CREATE (n:Document {title: $title, author: $author, path: $path, source: $source})
+    MERGE (n:Document {title: $title, author: $author, path: $path})
+    SET n.source = $source
     RETURN n
     """
     graph.query(nquery, params={"title":metadata["title"],
                                 "author":metadata["author"],
                                 "path":metadata["path"],
-                                "source": metadata["source"]})
+                                "source": metadata["source"]
+                                })
     
     nquery = """
     MATCH (a:Chunk {chunk_order: $seq, title: $title, source: $source}), (b:Chunk {chunk_order: $next, title: $title, source: $source})
@@ -215,6 +216,36 @@ def neo4j_nodes_and_relations(graph, chunks, metadata):
         if i < len(chunks) - 1:
             graph.query(nquery, params={"seq":i, "title":metadata["title"], "source":metadata["source"], "next":i+1})
         keywords = extract_keywords(chunks[i])
+        content = chunks[i]
+        links = re.findall(LINK_PATTERN, content)
+
+        for internal, standard in links:
+            target_raw = internal or standard
+
+            if target_raw.endswith(".md"):
+                current_dir = os.path.basename(metadata["title"])
+                base_dir = get_git_root(os.curdir)
+                predicted_target_path = os.path.normpath(os.path.join(current_dir, target_raw))
+                target_path = os.path.join(base_dir, predicted_target_path.lstrip('\\/'))
+                print("Joining", base_dir, "to", predicted_target_path, "==",  target_path)
+                path = os.path.dirname(target_path)
+
+                link_query = """
+                MATCH (c:Chunk {chunk_order: $seq, title: $current_title})
+                // MERGE ensures the node exists even if loader.py hasn't reached it yet
+                MERGE (t:Document {title: $title, author: $author, path: $path, source: $source})
+                MERGE (c)-[:REFERENCES]->(t)
+                """
+                
+                graph.query(link_query, params={
+                    "seq": i,
+                    "current_title": metadata["title"],
+                    "title": target_path,
+                    "author":metadata["author"],
+                    "path": path,
+                    "source": metadata["source"]
+                })
+
         for keyword in keywords:
             # Create a central 'Keyword' node if it doesn't exist
             keyword_node = graph.query(f"MATCH (k:Keyword {{name: '{keyword}'}}) RETURN k", params={"keyword": keyword})
