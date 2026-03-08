@@ -5,14 +5,15 @@
 ###
 
 import os
-from langchain_neo4j import Neo4jGraph
+from neo4j import GraphDatabase
+from chunker import SemanticChunker
+from grapher import KnowledgeGrapher
 from utils import get_git_root
 
 os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules', 'src'}
 # Note that 'src' is only a temporary exclution, since there aren't any documents beyond that point that I'm ready to include
 
-# Get neo4j credentials from environment variables
-url=os.environ.get("NEO4J_URL")
+neo4j_url=os.environ.get("NEO4J_URL")
 username=os.environ.get("NEO4J_USERNAME")
 password=os.environ.get("NEO4J_PASSWORD")
 
@@ -22,7 +23,8 @@ class MDFileChangeHandler:
 
     def sync_all(self):
         base_dir = get_git_root(os.curdir)
-        graph = Neo4jGraph(url=url, username=username, password=password)
+        driver = GraphDatabase.driver(neo4j_url, auth=(username, password))
+        session = driver.session()
 
         for root, dirs, files in os.walk(base_dir, topdown=True):
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
@@ -39,7 +41,7 @@ class MDFileChangeHandler:
                 SET c.name = $name
                 MERGE (c)-[:CHILD_OF]->(p)
                 """
-                graph.query(query, {
+                session.run(query, **{
                     "parent_path": parent_path, 
                     "child_path": dir_path, 
                     "name": d
@@ -51,16 +53,13 @@ class MDFileChangeHandler:
                 if file.endswith('.md'):
                     md_file_path = os.path.join(root, file)
                     print(f"Processing {md_file_path}")
-                    self.process_md_file(md_file_path, graph, root)
+                    self.process_md_file(md_file_path, session, root)
 
-    def process_md_file(self, md_file_path, graph, parent_path):
-        # Import the necessary functions from the agent module
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("agent_module", self.agent_module_path)
-        agent_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_module)
-
+    def process_md_file(self, md_file_path, session, parent_path):
         # Read the content of the .md file
+        chunker = SemanticChunker()
+        graper = KnowledgeGrapher()
+
         with open(md_file_path, 'r', encoding='utf-8') as f:
             document_text = f.read()
 
@@ -69,14 +68,13 @@ class MDFileChangeHandler:
             "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
             "path": parent_path,
             "title": md_file_path,
-            "author": "Unknown",
+            "author": "Scott Rogers",
             "type": os.path.basename(os.path.dirname(md_file_path))
         }
 
         # Call the semantic_chunking and neo4j_nodes_and_relations functions
-        chunks, _ = agent_module.init_chunkrag_pipeline(document_text)
-        graph = Neo4jGraph(url=url, username=username, password=password)
-        agent_module.neo4j_nodes_and_relations(graph, chunks, metadata)
+        chunks = chunker.chunk_text(text = document_text)
+        graper.create_node_with_links(chunks, metadata)
 
         # Link the Directory to the File created by the agent
         # We use MERGE on both to ensure we don't duplicate, 
@@ -86,7 +84,7 @@ class MDFileChangeHandler:
         MATCH (f:Document {source: $source, title: $file_path})
         MERGE (f)-[:CHILD_OF]->(d)
         """
-        graph.query(link_query, {
+        session.run(link_query, **{
             "parent_path": parent_path, 
             "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
             "file_path": md_file_path

@@ -1,7 +1,6 @@
 import re
 import os
 import numpy as np
-from bs4 import BeautifulSoup as bs
 from sentence_transformers import SentenceTransformer, util
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, MessagesPlaceholder
@@ -125,43 +124,6 @@ def semantic_chunking(document, llm, model_name='nomic-ai/nomic-embed-text-v1.5'
    
     print(f"{len(chunks)} - chunks detected from {len(paragraphs)} paragraphs")
     return chunks
-
-
-def graph_details(llm, graph, chunks, text_summary):
-    """
-    Filters chunks based on relevance to the query using an LLM.
-    """
-
-
-    # Prompt template for relevance assessment
-    template = """
-    You analyze text to descover why the author chose to write a given scene. Given the summary of
-    the whole text and the chunk of text for the given scene, what is the purpose of this chunk?
-   
-    Text Summary: {text_summary}
-    Scene: {chunk}
-    Summary:
-    """
-
-
-    prompt = PromptTemplate(template=template, input_variables=["text_summary", "chunk"])
-
-
-    llm_chain = (
-        prompt  # Apply the prompt template
-        | llm  # Use the language model to answer the question based on context
-        | StrOutputParser()  # Parse the model's response as a string
-    )
-
-
-    for chunk in chunks:
-        # Get the relevance score from the LLM
-        response = llm_chain.invoke({"text_summary":text_summary, "chunk":chunk})
-        try:
-            graph.query(nquery, params={"summary":response})
-        except ValueError:
-            print(f"Could not find relevance score for chunk: {chunk} got response {response}")
-
 
 def neo4j_nodes_and_relations(graph, chunks, metadata):
     docs = []
@@ -352,14 +314,8 @@ if __name__ == "__main__":
     RETURN n
     """
     result = graph.query(nquery, params={"source":metadata["source"]})
-    if len(result) == 0:
-        chunks, llm = init_chunkrag_pipeline(document_text)
-        # Fill out graph
-        neo4j_vector = neo4j_nodes_and_relations(graph, chunks, metadata)
-    else:
-        llm, neo4j_vector = init_from_existing()
-   
-
+    chunks, llm = init_chunkrag_pipeline(document_text)
+    neo4j_vector = neo4j_nodes_and_relations(graph, chunks, metadata)
 
     final_response = query_chunkrag_pipeline(neo4j_vector, llm, graph, user_query)
     print("\n--- Final Answer ---")

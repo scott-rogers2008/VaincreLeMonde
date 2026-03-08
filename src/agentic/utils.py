@@ -15,8 +15,27 @@ def get_git_root(path):
     """
     try:
         # Run the git command to get the top-level directory
-        base = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], cwd=path, stderr=subprocess.DEVNULL)
+        base = subprocess.check_output(
+            ['git', 'rev-parse', '--show-toplevel'], 
+            cwd=path, 
+            stderr=subprocess.DEVNULL)
         # Decode the output from bytes to string and strip whitespace
         return base.decode('utf-8').strip()
     except subprocess.CalledProcessError:
         raise IOError('Current working directory is not a git repository')
+
+def get_git_user():
+    """
+    Returns the name of the git user.
+    """
+    try:
+        name_result = subprocess.check_output(
+            ['git', 'config', 'user.name'], 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE, 
+            text=True, 
+            check=True)
+        # Decode the output from bytes to string and strip whitespace
+        return name_result.stdout.decode('utf-8').strip()
+    except subprocess.CalledProcessError:
+        raise IOError('Git is not installed or not found in the given PATH.')
