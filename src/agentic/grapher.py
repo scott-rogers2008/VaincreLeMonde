@@ -1,5 +1,6 @@
 from neo4j import GraphDatabase
 from utils import get_git_root
+from datetime import date
 import ollama
 import os
 import re
@@ -44,7 +45,8 @@ class KnowledgeGrapher:
                     MERGE (d:Chunk {chunk_order: $seq, title: $title, source: $source})
                     SET d.embedding = $vector,
                         d.author = $author,
-                        d.text = $text
+                        d.text = $text,
+                        d.priority = 0.5
                     """, 
                     text=chunk,
                     vector=vector, 
@@ -58,14 +60,26 @@ class KnowledgeGrapher:
             # Create the base document node
             nquery = """
             MERGE (n:Document {title: $title, author: $author, path: $path})
-            SET n.source = $source
+            SET n.source = $source,
+                n.version = 0.1,
+                n.priority = 0.5,
+                n.confidence_score = 0.5,
+                n.stability_score = 0.5,
+                n.utility_score = 0.0,
+                n.sample_size = 0,
+                n.last_update = $today,
+                n.stability = "work in progress",
+                n.type = $type,
+                n.history = []
             RETURN n
             """
-            session.run(nquery, **{"title":metadata["title"],
-                                        "author":metadata["author"],
-                                        "path":metadata["path"],
-                                        "source": metadata["source"]
-                                        })
+            session.run(nquery, **{"title"  : metadata["title"],
+                                   "author": metadata["author"],
+                                   "path"  : metadata["path"],
+                                   "source": metadata["source"],
+                                   "type"  : metadata["type"],
+                                   "today" : date.today()
+                                  })
             
             nquery = """
             MATCH (a:Chunk {chunk_order: $seq, title: $title, source: $source}), (b:Chunk {chunk_order: $next, title: $title, source: $source})

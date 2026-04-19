@@ -1,13 +1,16 @@
-from smolagents import CodeAgent
-from tools import sentence_tokenizer_tool, definition_storage_tool, dictionary_sense_lookup, sentence_word_mapper
-
 # agents/philologist.py
+
+from smolagents import CodeAgent
+from tools import sentence_tokenizer_tool, definition_storage_tool, get_shared_memory, update_agent_memory
+from tools import dictionary_sense_lookup, sentence_word_mapper, ask_user_confirmation
 
 def create_philologist_agent(model):
     return CodeAgent(
-        tools=[sentence_tokenizer_tool, definition_storage_tool, dictionary_sense_lookup, sentence_word_mapper],
+        tools=[sentence_tokenizer_tool, definition_storage_tool, get_shared_memory, update_agent_memory,
+               dictionary_sense_lookup, sentence_word_mapper, ask_user_confirmation],
         model=model,
         name="philologist",
+        description="Analyzes sentences to identify idioms, curate dictionary definitions, and map words to the database.",
         instructions=(
             "You are a Master Philologist. Your goal is to curate a high-quality dictionary. "
             "For every sentence provided:\n"
@@ -38,6 +41,5 @@ def create_philologist_agent(model):
             - 3.0-4.0: Intermediate idioms (e.g., "Kick the bucket").
             - 1.0-2.0: Rare/Archaic idioms.
             """
-        ),
-        description="Analyzes sentences to identify idioms, curate dictionary definitions, and map words to the database."
+        )
     )

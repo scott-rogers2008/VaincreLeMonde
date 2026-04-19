@@ -69,7 +69,8 @@ class MDFileChangeHandler:
             "path": parent_path,
             "title": md_file_path,
             "author": "Scott Rogers",
-            "type": os.path.basename(os.path.dirname(md_file_path))
+            "stability": "work in progress", 
+            "type": [os.path.basename(os.path.dirname(md_file_path))]
         }
 
         # Call the semantic_chunking and neo4j_nodes_and_relations functions

@@ -70,11 +70,12 @@ def get_language_id(search_term: str) -> str:
         with engine.connect() as conn:
             # We search across English name, Native name, and ID code for flexibility
             query = text("""
-                SELECT id_code, name_english, name_native, active_period
-                FROM languages
+                SELECT id, iso_639_1, iso_639_3, name_english, name_native, spacy_model
+                FROM language
                 WHERE name_english ILIKE :term 
-                   OR name_native ILIKE :term 
-                   OR id_code ILIKE :term
+                   OR name_native ILIKE :term
+                   OR iso_639_3 ILIKE :term 
+                   OR iso_639_1 ILIKE :term
                 LIMIT 1
             """)
             result = conn.execute(query, {"term": f"%{search_term}%"}).fetchone()

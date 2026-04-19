@@ -8,8 +8,8 @@ model = LiteLLMModel(model_id="ollama/qwen3:8b")
 
 philologist = create_philologist_agent(model)
 codex = create_codex_agent(model)
-scout = create_scout_agent(model)
-librarian = create_librarian_agent(model, scout, codex, philologist)
+scout = create_scout_agent(model, philologist)
+librarian = create_librarian_agent(model, scout, codex)
 
 MISSION_URL = "https://www.grimmstories.com/de/grimm_maerchen/hansel_und_gretel"
 LANGUAGE_ID = "DEU-ZZ-M"
