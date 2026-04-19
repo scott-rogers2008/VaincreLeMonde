@@ -20,7 +20,9 @@ def create_scout_agent(model, philologist_managed):
             "5. STOP and return a summary and proposed path for approval.\n "
             "6. Only after the user gives approval can you create a new path manage_directory(path, create=True).\n "
             "7. Extract scaped text and Save as .md using process_and_save_document.\n "
-            "8. Use sentence_splitter, and send each of the sentences to the Philologist.\n "
-            "IMPORTANT: Return ONLY the exact sentences found."
+            "8. RE-READ the saved .md file using read_markdown_content to ensure you have the full text.\n "
+            "9. Pass that full text to sentence_splitter.\m "
+            "10. Pass each sentence to the philologist."
+            "IMPORTANT: Return ONLY the exact sentences found in the original text."
         )
     )
