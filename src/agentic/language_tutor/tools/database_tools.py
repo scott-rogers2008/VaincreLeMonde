@@ -5,12 +5,12 @@ from .database_manager import engine
 from .embeddings import get_embeddings
 
 @tool
-def db_content_loader(sentences: list, lang_id: str, work_id: int) -> str:
+def db_content_loader(sentences: list, lang_id: int, work_id: int) -> str:
     """
     Inserts an ordered list of sentences into the 'sentences' table linked to a specific work.
     Args:
         sentences: A list of raw text sentences in chronological order.
-        lang_id: The 10-char language code.
+        lang_id: The integer ID from the language table.
         work_id: The integer ID of the story/chapter from the literary_works table.
     """
     success_count = 0
@@ -62,7 +62,7 @@ def db_content_reader(work_id: int) -> list:
 @tool
 def get_language_id(search_term: str) -> str:
     """
-    Looks up the correct id_code in the 'languages' table using a name or era.
+    Looks up the correct id in the 'language' table using a name or era.
     Args:
         search_term: A search string like 'Korean', 'Shakespeare', or 'Modern German'.
     """
@@ -81,8 +81,7 @@ def get_language_id(search_term: str) -> str:
             result = conn.execute(query, {"term": f"%{search_term}%"}).fetchone()
             
             if result:
-                return (f"Found: {result.id_code} ({result.name_english} / {result.name_native}). "
-                        f"Active Period: {result.active_period}")
+                return (f"Found: {result.id} ({result.name_english} / {result.name_native}). ")
             return "No matching language code found. Please ask the user for clarification."
     except Exception as e:
         return f"Database Error: {str(e)}"

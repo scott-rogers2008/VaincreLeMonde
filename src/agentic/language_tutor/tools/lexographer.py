@@ -77,7 +77,7 @@ def dictionary_sense_lookup(
     word: str, 
     pos_tag: str, 
     context_sentence: str, 
-    lang_id: str
+    lang_id: int
 ) -> dict:
     """
     Checks if a definition for a word already exists that matches the current context.
@@ -87,7 +87,7 @@ def dictionary_sense_lookup(
         word: The lemma or word to look up.
         pos_tag: The spaCy POS tag (e.g., 'NOUN', 'VERB').
         context_sentence: The sentence where the word appears, used for sense disambiguation.
-        lang_id: The 10-char language code.
+        lang_id: The integer ID from the language table.
     """
     context_vector = get_embeddings(context_sentence)
     # Ensure it's a flat list of floats

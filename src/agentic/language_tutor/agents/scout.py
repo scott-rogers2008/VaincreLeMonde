@@ -1,19 +1,18 @@
 # agents/scout.py
 
-from smolagents import CodeAgent
-from tools import get_raw_html, process_and_save_document, sentence_splitter, get_shared_memory, update_agent_memory
+from smolagents import ToolCallingAgent 
+from tools import get_raw_html, process_and_save_document, get_shared_memory, update_agent_memory
 from tools import directory_explorer, manage_directory, ask_user_confirmation, read_markdown_content
 
-def create_scout_agent(model, philologist_managed):
-    return CodeAgent(
-        tools=[get_raw_html, process_and_save_document, sentence_splitter, read_markdown_content,
+def create_scout_agent(model):
+    return ToolCallingAgent(
+        tools=[get_raw_html, process_and_save_document, read_markdown_content,
                directory_explorer, manage_directory, ask_user_confirmation, get_shared_memory, update_agent_memory],
         model=model,
         name="scout",
-        managed_agents=[philologist_managed],
         description="A specialist that scrapes URLs, manages story files, and triggers philological analysis.",
         instructions=(
-            "1. Check if it's already been downloaded using the directory_explorer, or if needed Scrape content using get_raw_html.\n "
+            "1. Check if it's already been downloaded for the correct language using the directory_explorer, or if needed Scrape content using get_raw_html.\n "
             "2. RUN directory_explorer to see the current /references/ tree structure.\n "
             "3. Based on the content type, pick the best existing path (e.g., 'speeches/religious/BYU_speeches').\n "
             "4. If no suitable directory exists, use manage_directory(path, create=False).\n "
@@ -21,8 +20,6 @@ def create_scout_agent(model, philologist_managed):
             "6. Only after the user gives approval can you create a new path manage_directory(path, create=True).\n "
             "7. Extract scaped text and Save as .md using process_and_save_document.\n "
             "8. RE-READ the saved .md file using read_markdown_content to ensure you have the full text.\n "
-            "9. Pass that full text to sentence_splitter.\m "
-            "10. Pass each sentence to the philologist."
-            "IMPORTANT: Return ONLY the exact sentences found in the original text."
+            "9. Pass that full text back to the librarian.\n "
         )
     )

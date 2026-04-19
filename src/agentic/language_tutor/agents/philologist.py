@@ -1,11 +1,11 @@
 # agents/philologist.py
 
-from smolagents import CodeAgent
+from smolagents import ToolCallingAgent
 from tools import sentence_tokenizer_tool, definition_storage_tool, get_shared_memory, update_agent_memory
 from tools import dictionary_sense_lookup, sentence_word_mapper, ask_user_confirmation
 
 def create_philologist_agent(model):
-    return CodeAgent(
+    return ToolCallingAgent(
         tools=[sentence_tokenizer_tool, definition_storage_tool, get_shared_memory, update_agent_memory,
                dictionary_sense_lookup, sentence_word_mapper, ask_user_confirmation],
         model=model,

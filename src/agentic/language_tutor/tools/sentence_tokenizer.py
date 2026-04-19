@@ -6,16 +6,16 @@ from .database_manager import engine
 from typing import List, Dict
 
 @tool
-def sentence_tokenizer_tool(text_content: str, lang_id: str) -> List[Dict]:
+def sentence_tokenizer_tool(text_content: str, lang_id: int) -> List[Dict]:
     """
     Uses SpaCy to tokenize a sentence and extract lemmas and parts of speech.
     Args:
         text_content: The raw sentence string.
-        lang_id: The 10-char language code (e.g., 'DEU-ZZ-M').
+        lang_id: The integer ID from the language table.
     """
     try:
         with engine.connect() as conn:
-            query = text("SELECT spacy_model FROM languages WHERE id_code = :lang")
+            query = text("SELECT spacy_model FROM language WHERE id = :lang")
             model_name = conn.execute(query, {"lang": lang_id}).scalar()
             
         if not model_name:

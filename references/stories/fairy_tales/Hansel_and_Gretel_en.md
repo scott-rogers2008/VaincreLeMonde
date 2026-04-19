@@ -1,7 +1,7 @@
 
 ## Hansel and Gretel
 
-A fairy tale by the Brothers Grimm
+### A fairy tale by the Brothers Grimm
 
 Near a great forest there lived a poor woodcutter and his wife, and his two children; the boy's name was Hansel and the girl's Grethel. They had very little to bite or to sup, and once, when there was great dearth in the land, the man could not even gain the daily bread. As he lay in bed one night thinking of this, and turning and tossing, he sighed heavily, and said to his wife, "What will become of us? we cannot even feed our children; there is nothing left for ourselves."
 
@@ -58,7 +58,7 @@ When four weeks had passed and Hansel seemed to remain so thin, she lost patienc
 
 "Stupid goose," said the old woman, "the opening is big enough, do you see? I could get in myself!" and she stooped down and put her head in the oven's mouth. Then Grethel gave her a push, so that she went in farther, and she shut the iron door upon her, and put up the bar. Oh how frightfully she howled! but Grethel ran away, and left the wicked witch to burn miserably.
 
-Grethel went straight to Hansel, opened the stable-door, and cried, "Hansel, we are free! the old witch is dead!" Then out flew Hansel like a bird from its cage as soon as the door is opened. How rejoiced they both were! how they fell each on the other's neck! and danced about, and kissed each other! And as they had nothing more to fear they went over all the old witch's house, and in every corner there stood chests of pearls and precious stones. "This is something better than flint stones," said Hansel, as he filled his pockets, and Grethel, thinking she also would like to carry something home with her, filled her apron full. i! Now, away we go," said Hansel, "if we only can get out of the witch's wood." When they had journeyed a few hours they came to a great piece of water. "We can never get across this," said Hansel, "I see no stepping-stones and no bridge."
+Grethel went straight to Hansel, opened the stable-door, and cried, "Hansel, we are free! the old witch is dead!" Then out flew Hansel like a bird from its cage as soon as the door is opened. How rejoiced they both were! how they fell each on the other's neck! and danced about, and kissed each other! And as they had nothing more to fear they went over all the old witch's house, and in every corner there stood chests of pearls and precious stones. "This is something better than flint stones," said Hansel, as he filled his pockets, and Grethel, thinking she also would like to carry something home with her, filled her apron full. "Now, away we go," said Hansel, "if we only can get out of the witch's wood." When they had journeyed a few hours they came to a great piece of water. "We can never get across this," said Hansel, "I see no stepping-stones and no bridge."
 
 "And there is no boat either," said Grethel; "but here comes a white duck; if I ask her she will help us over." So she cried,
 
