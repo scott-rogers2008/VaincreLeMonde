@@ -1,3 +1,5 @@
+# codebase_guru/tools/git_sync.py
+
 import os
 from .parser import CodebaseParser
 from .embedder import LocalEmbedder

@@ -1,13 +1,18 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
 
-// Node index 0 is 'node', index 1 is 'jsparser.js', index 2 is your file path
-const filePath = process.argv[2]; 
+// Node index 2 is your file path
+const filePath = process.argv[2];
 
 if (!filePath) {
     console.error(JSON.stringify({ error: "Missing file path argument" }));
     process.exit(1);
+}
+
+function calculateHash(text) {
+    return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
 try {
@@ -21,18 +26,39 @@ try {
 
     traverse(ast, {
         FunctionDeclaration(path) {
-            if (path.node.id) {
-                codebaseMap.functions.push({ name: path.node.id.name, docstring: "", doc_hash: "", body: "", body_hash: "" });
+            if (path.node.id && path.node.start !== null && path.node.end !== null) {
+                const bodyCode = code.slice(path.node.start, path.node.end);
+                codebaseMap.functions.push({
+                    name: path.node.id.name,
+                    docstring: "", // Babel extraction for JSDoc can be added here if needed
+                    doc_hash: "",
+                    body: bodyCode,
+                    body_hash: calculateHash(bodyCode)
+                });
             }
         },
         ClassDeclaration(path) {
-            if (path.node.id) {
-                codebaseMap.classes.push({ name: path.node.id.name, docstring: "", doc_hash: "", body: "", body_hash: "" });
+            if (path.node.id && path.node.start !== null && path.node.end !== null) {
+                const bodyCode = code.slice(path.node.start, path.node.end);
+                codebaseMap.classes.push({
+                    name: path.node.id.name,
+                    docstring: "",
+                    doc_hash: "",
+                    body: bodyCode,
+                    body_hash: calculateHash(bodyCode)
+                });
             }
         },
         ClassMethod(path) {
-            if (path.node.key && path.node.key.type === 'Identifier') {
-                codebaseMap.functions.push({ name: path.node.key.name, docstring: "", doc_hash: "", body: "", body_hash: "" });
+            if (path.node.key && path.node.key.type === 'Identifier' && path.node.start !== null && path.node.end !== null) {
+                const bodyCode = code.slice(path.node.start, path.node.end);
+                codebaseMap.functions.push({
+                    name: path.node.key.name,
+                    docstring: "",
+                    doc_hash: "",
+                    body: bodyCode,
+                    body_hash: calculateHash(bodyCode)
+                });
             }
         }
     });

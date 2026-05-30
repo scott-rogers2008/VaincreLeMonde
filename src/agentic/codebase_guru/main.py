@@ -26,10 +26,11 @@ def run_ingestion(target_repo_path):
             print(f"⏩ Skipping database sync for broken file: {file_info.get('file_path', 'Unknown')}")
             continue
         
-        rel_path = file_info["file_path"]
+        rel_path = file_info["file_path"].replace("\\", "/")
+        if rel_path.startswith("src/"):
+            rel_path = rel_path[4:]
+
         print(f"📦 Processing file: {rel_path}")
-        
-        # Upsert the file baseline node
         db.sync_file_node(rel_path, file_info["file_hash"])
         
         # Ingest functions/methods found within the file

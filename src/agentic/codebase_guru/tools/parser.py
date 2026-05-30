@@ -1,6 +1,8 @@
+# codebase_guru/tools/parser.py
+
 import ast
 import hashlib
-import json  # FIX 1: Added missing json import
+import json
 import os
 import subprocess
 
@@ -48,8 +50,12 @@ class CodebaseParser:
 
     def parse_file(self, file_path: str) -> dict:
         """Dissects a file into structural nodes and documentation."""
-        relative_path = os.path.relpath(file_path, self.root_dir)
+        # 1. Calculate relative path natively
+        raw_relative_path = os.path.relpath(file_path, self.root_dir)
         
+        # CRITICAL FIX: Explicitly force universal forward slashes immediately!
+        relative_path = raw_relative_path.replace("\\", "/")
+               
         # FIX 2: Handle JavaScript / TypeScript completely separate from Python AST
         if file_path.endswith(('.js', '.ts', '.jsx', '.tsx')):
             try:
