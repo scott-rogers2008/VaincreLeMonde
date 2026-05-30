@@ -8,7 +8,7 @@ from utils import get_git_root
 from smolagents import CodeAgent, LiteLLMModel, tool
 from smolagents.memory import TaskStep
 
-EMBED_MODEL = "nomic-embed-text"
+EMBED_MODEL = "bge-m3"
 
 model = LiteLLMModel(
     model_id="ollama/llama3.1",

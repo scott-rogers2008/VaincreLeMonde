@@ -6,7 +6,7 @@ import os
 import re
 
 LINK_PATTERN = r'\[\[([^\]]*?)\]\]|\[[^\]]*?\]\((.*?\.[a-zA-Z0-9]+)\)'
-EMBED_MODEL = "nomic-embed-text"
+EMBED_MODEL = "bge-m3"
 
 class KnowledgeGrapher:
     def __init__(self, model_name = EMBED_MODEL, link_pattern= LINK_PATTERN):
@@ -19,13 +19,22 @@ class KnowledgeGrapher:
         password = os.environ.get("NEO4J_PASSWORD")
         self.driver = GraphDatabase.driver(neo4j_url, auth=(username, password))
 
+    def _clean_text_for_bge(self, text: str) -> str:
+        """Strips syntax that causes numerical stability (NaN) 500 crashes in Ollama BGE-M3."""
+        # 1. Remove markdown images and link text syntax
+        text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
+        # 2. Strip heavy markdown table walls (|---|) which mess with positional math
+        text = re.sub(r'\|[\s\-:|]+\|', '', text)
+        # 3. Collapse aggressive tab spaces and clean lines
+        return " ".join(text.split())
+    
     def create_vector_index(self, tx):
         # 'vector_index' matches your LangChain snippet's index_name
         tx.run("""
         CREATE VECTOR INDEX `vector_index` IF NOT EXISTS
-        FOR (n:Document) ON (n.embedding)
+        FOR (n:Chunk) ON (n.embedding)
         OPTIONS {indexConfig: {
-        `vector.dimensions`: 768,
+        `vector.dimensions`: 1024,
         `vector.similarity_function`: 'cosine'
         }}
         """)
@@ -37,7 +46,13 @@ class KnowledgeGrapher:
             seq = 0
             unique_ids = [None] * len(chunks)
             for chunk in chunks:
-                vector = ollama.embed(model=self.model_name, input=chunk)["embeddings"][0]
+                cleaned = self._clean_text_for_bge(chunk)
+                if not cleaned.strip():
+                    # Option A: Use a zero-vector if you still want to index empty nodes
+                    vector = [0.0] * 1024 
+                    # Option B: Alternatively, use a placeholder token like: cleaned = "[empty]"
+                else:
+                    vector = ollama.embed(model=self.model_name, input=cleaned)["embeddings"][0]
                 metadata["seq"] = seq
                 unique_ids[seq] = f"{metadata['source']}_{metadata['title']}_chunk_{seq}"
                 # Save text, vector AND metadata properties to the node
@@ -135,10 +150,10 @@ class KnowledgeGrapher:
                         session.run(f"CREATE (k:Keyword {{name: '{keyword}'}})", **{"keyword": keyword})
 
                     # Create a relationship between the chunk and the 'Keyword' node
-                    session.run(f"""MATCH (c:Chunk {{unique_id: $unique_id}}), 
+                    session.run(f"""MATCH (c:Chunk {{chunk_order: $seq, title: $current_title}}), 
                                      (k:Keyword {{name: $keyword}}) 
                                      MERGE (c)-[:MENTIONS]->(k)""", 
-                                     **{"unique_id": unique_ids[i], "keyword": keyword})
+                                     **{"seq": i, "current_title": metadata["title"]})
         return 
 
 

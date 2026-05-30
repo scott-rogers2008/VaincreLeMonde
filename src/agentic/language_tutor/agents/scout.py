@@ -1,6 +1,6 @@
 # agents/scout.py
 
-from smolagents import ToolCallingAgent 
+from smolagents import ToolCallingAgent, LogLevel
 from tools import get_raw_html, process_and_save_document, get_shared_memory, update_agent_memory
 from tools import directory_explorer, manage_directory, ask_user_confirmation, read_markdown_content
 
@@ -21,5 +21,7 @@ def create_scout_agent(model):
             "7. Extract scaped text and Save as .md using process_and_save_document.\n "
             "8. RE-READ the saved .md file using read_markdown_content to ensure you have the full text.\n "
             "9. Pass that full text back to the librarian.\n "
-        )
+        ),
+        verbosity_level=LogLevel.DEBUG,  # FULL VERBOSE
+        stream_outputs=True
     )

@@ -5,7 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 from smolagents import tool
 from markdownify import markdownify as md
-from .utils import get_git_root
 
 @tool
 def get_raw_html(url: str) -> str:

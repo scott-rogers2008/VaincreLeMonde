@@ -1,6 +1,6 @@
 # agents/codex.py
 
-from smolagents import ToolCallingAgent
+from smolagents import ToolCallingAgent, LogLevel
 from tools import get_language_id, ask_user_confirmation, get_shared_memory, update_agent_memory
 
 def create_codex_agent(model):
@@ -12,5 +12,7 @@ def create_codex_agent(model):
         instructions="""
         The language table has 6 columns:  id | iso_639_1 | name_native | name_english | iso_639_3 | spacy_model.
         The integer id is the unique identifier needed for the database tools to identify the correct language.
-        """
+        """,
+        verbosity_level=LogLevel.DEBUG,  # FULL VERBOSE
+        stream_outputs=True
     )

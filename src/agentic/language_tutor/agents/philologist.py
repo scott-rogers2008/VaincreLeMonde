@@ -1,6 +1,6 @@
 # agents/philologist.py
 
-from smolagents import ToolCallingAgent
+from smolagents import ToolCallingAgent, LogLevel
 from tools import sentence_tokenizer_tool, definition_storage_tool, get_shared_memory, update_agent_memory
 from tools import dictionary_sense_lookup, sentence_word_mapper, ask_user_confirmation
 
@@ -41,5 +41,7 @@ def create_philologist_agent(model):
             - 3.0-4.0: Intermediate idioms (e.g., "Kick the bucket").
             - 1.0-2.0: Rare/Archaic idioms.
             """
-        )
+        ),
+        verbosity_level=LogLevel.DEBUG,  # FULL VERBOSE
+        stream_outputs=True
     )

@@ -37,25 +37,39 @@ def db_content_loader(sentences: list, lang_id: int, work_id: int) -> str:
         return f"Database Error: {str(e)}"
 
 @tool
-def db_content_reader(work_id: int) -> list:
+def db_content_reader(work_id: int, index: int =-1) -> list:
     """
     Reads all sentences for a specific work, perfectly ordered from start to finish.
     Args:
         work_id: The ID of the story or chapter to retrieve.
+        index: The ordered index number of a specific sentence or -1 for all sentences.
     """
     try:
-        with engine.connect() as conn:
-            # We ORDER BY sentence_order to ensure the story isn't jumbled
-            result = conn.execute(
-                text("""
-                    SELECT full_text 
-                    FROM sentences 
-                    WHERE work_id = :work 
-                    ORDER BY sentence_order ASC
-                """),
-                {"work": work_id}
-            )
-            return [row[0] for row in result.fetchall()]
+        if index < 0:
+            with engine.connect() as conn:
+                # We ORDER BY sentence_order to ensure the story isn't jumbled
+                result = conn.execute(
+                    text("""
+                        SELECT full_text 
+                        FROM sentences 
+                        WHERE work_id = :work 
+                        ORDER BY sentence_order ASC
+                    """),
+                    {"work": work_id}
+                )
+                return [row[0] for row in result.fetchall()]
+        else :
+            with engine.connect() as conn:
+                result = conn.execute(
+                    text("""
+                        SELECT full_text 
+                        FROM sentences 
+                        WHERE work_id = :work, sentence_order = :index 
+                        ORDER BY sentence_order ASC
+                    """),
+                    {"work": work_id, "index": index}
+                )
+                return [row[0] for row in result.fetchall()]
     except Exception as e:
         return [f"Error reading database: {str(e)}"]
 

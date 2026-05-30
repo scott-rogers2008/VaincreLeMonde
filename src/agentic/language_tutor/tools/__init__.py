@@ -1,8 +1,8 @@
 # tools/__init__.py
 from .scraping import get_raw_html, process_and_save_document
 from .file_management import directory_explorer, read_markdown_content, manage_directory
-from .linguistic import sentence_splitter
-from .database_tools import db_content_loader, db_content_reader, get_language_id
+from .linguistic import sentence_splitter, loader
+from .database_tools import db_content_reader, get_language_id
 from .library_tools import register_work, library_search
 from .embeddings import get_embeddings
 from .sentence_tokenizer import sentence_tokenizer_tool
@@ -15,7 +15,7 @@ from .lexographer import (
 )
 
 __all__ = [
-    'db_content_loader', 
+    'loader',
     'db_content_reader', 
     'get_language_id',
     'directory_explorer',

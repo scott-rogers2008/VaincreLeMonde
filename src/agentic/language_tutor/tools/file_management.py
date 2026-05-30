@@ -4,61 +4,91 @@ from smolagents import tool
 from markdown_it import MarkdownIt
 from .utils import get_git_root
 
+import os
+from smolagents import tool
+
+import os
+from smolagents import tool
+
 @tool
-def directory_explorer() -> str:
+def directory_explorer(path: str) -> str:
     """
-    Returns a visual tree of the 'references' directory to help decide where to save a file.
-    Use this to see existing categories and subdirectories.
+    Lists the contents of a directory.
+    Args:
+        path: The path (relative to references/) to explore.
     """
-    base_dir = get_git_root(os.curdir)
-    base_references = os.path.abspath(os.path.join(base_dir, "references"))
-    if not os.path.exists(base_references):
-        return f"Error: Reference directory not found at {base_references}"
-    
-    tree_output = "Current Reference Library Structure:\n"
-    for root, dirs, files in os.walk(base_references):
-        # Calculate indentation based on depth from base_references
-        level = root.replace(base_references, '').count(os.sep)
-        indent = ' ' * 4 * level
+    try:
+        # 1. Force the base to your project root
+        base_dir = get_git_root(os.curdir)
+        ref_dir_name = "references"
+        ref_dir_path = os.path.abspath(os.path.join(base_dir, ref_dir_name))
         
-        # Add the directory name
-        dir_name = os.path.basename(root) or "references"
-        tree_output += f"{indent}{dir_name}/\n"
+        # 2. Clean the input path
+        # Normalize slashes (converts / to \ on Windows)
+        normalized_path = os.path.normpath(path.lstrip("/\\"))
         
-        # Add the files within this directory
-        sub_indent = ' ' * 4 * (level + 1)
-        for f in files:
-            tree_output += f"{sub_indent}- {f}\n"
-    return tree_output
+        # 3. If agent included 'references' in the string, strip it manually
+        if normalized_path.startswith(ref_dir_name):
+            # Remove 'references' plus the following separator
+            clean_path = normalized_path[len(ref_dir_name):].lstrip(os.sep)
+        else:
+            clean_path = normalized_path
+
+        # 4. Final target construction
+        target_path = os.path.abspath(os.path.join(ref_dir_path, clean_path))
+
+        # Security check: Ensure we are still inside references/
+        if not target_path.startswith(ref_dir_path):
+            return f"Error: Access denied. Path must be inside '{ref_dir_name}/'."
+
+        if not os.path.exists(target_path):
+            # Debug info helps the agent correct its mistake
+            return f"Error: Path '{target_path}' not found. Current dir: {os.getcwd()}"
+            
+        if not os.path.isdir(target_path):
+            return f"Error: '{path}' is a file. Listing aborted."
+
+        # 5. List and format
+        items = sorted(os.listdir(target_path))
+        output = []
+        for i in items:
+            prefix = "[DIR] " if os.path.isdir(os.path.join(target_path, i)) else "[FILE]"
+            output.append(f"{prefix} {i}")
+        
+        return "\n".join(output) if output else "Directory is empty."
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @tool
 def read_markdown_content(file_path: str) -> str:
-    """
-    Reads a .md file from the references directory and extracts plain text for analysis.
+    """Reads a .md file from the references directory.
+    
     Args:
-        file_path: The full path to the .md file to be read.
+        file_path: The path to the .md file to be read relative to references/.
     """
     try:
-        base_dir = get_git_root(os.curdir)
-        # This forces the agent's path to be absolute relative to your project root
-        full_path = os.path.normpath(os.path.join(base_dir, file_path))
+        # Use the same logic as directory_explorer
+        base_dir = os.getcwd()
+        ref_dir_path = os.path.abspath(os.path.join(base_dir, "references"))
+        
+        # Clean path (strips 'references' if the agent included it)
+        clean_path = file_path.replace("references", "").lstrip("/\\")
+        full_path = os.path.join(ref_dir_path, clean_path)
+
+        if not os.path.exists(full_path):
+            return f"Error: File not found at {full_path}"
 
         with open(full_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
-        # Use markdown-it-py to extract plain text only
+            
+        # Simplified extraction to ensure you actually get text
         md = MarkdownIt()
         tokens = md.parse(content)
+        # Better fallback: if parsing logic is too strict, you get nothing
+        text = " ".join([t.content for t in tokens if t.content]).strip()
         
-        # Extract text from tokens, ignoring markdown syntax
-        plain_text_parts = []
-        for token in tokens:
-            if token.type == "inline":
-                plain_text_parts.append(token.content)
-            elif token.type in ["paragraph_open", "heading_open"]:
-                plain_text_parts.append("\n")
-                
-        return " ".join(plain_text_parts).strip()
+        return text if text else content[:500] # Return raw content if parser yields nothing
     except Exception as e:
         return f"Error reading markdown file: {str(e)}"
     

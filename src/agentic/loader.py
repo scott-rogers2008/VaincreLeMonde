@@ -6,8 +6,8 @@
 
 import os
 from neo4j import GraphDatabase
-from chunker import SemanticChunker
-from grapher import KnowledgeGrapher
+from language_tutor.tools.chunker import SemanticChunker
+from language_tutor.tools.grapher import KnowledgeGrapher
 from utils import get_git_root
 
 os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules', 'src'}
@@ -60,8 +60,13 @@ class MDFileChangeHandler:
         chunker = SemanticChunker()
         graper = KnowledgeGrapher()
 
-        with open(md_file_path, 'r', encoding='utf-8') as f:
-            document_text = f.read()
+        try:
+            with open(md_file_path, 'r', encoding='utf-8') as f:
+                document_text = f.read()
+        except UnicodeDecodeError:
+            # If UTF-8 fails, read it as Windows-1252 which handles 0x93 perfectly
+            with open(md_file_path, 'r', encoding='cp1252', errors='replace') as f:
+                document_text = f.read()
 
         # Import metadata from folder name
         metadata = {

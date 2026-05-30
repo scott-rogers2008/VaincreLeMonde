@@ -5,7 +5,10 @@ from agents.codex import create_codex_agent
 from agents.librarian import create_librarian_agent
 from agents.quality_control import create_quality_control_agent
 
-model = LiteLLMModel(model_id="ollama/qwen3:8b")
+# model = LiteLLMModel(model_id="ollama/alibayram/smollm3")
+# model = LiteLLMModel(model_id="ollama/phi4:14b")
+model = LiteLLMModel(model_id="ollama/qwen3.5:9b")
+# model  = LiteLLMModel(model_id="ollama/hermes3:3b")
 
 philologist = create_philologist_agent(model)
 codex = create_codex_agent(model)
