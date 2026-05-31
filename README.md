@@ -1,5 +1,5 @@
 # VaincreLeMonde: improving the world one person at a time
-### "Winning at life beins with the internal compass, and how well we keep it clean and fine-tuned so that it can help navigate us through any challange."
+### Winning at life begins with refining the internal compass, keeping it clean and fine-tuned so that it can help navigate us through any challange.
 
 This project is a collection of stuff designed to help me to hear, recognize, understand, and follow the guiding influence of the universe. I believe that understanding this guidance is the key to unlocking unlimited power in our lives. I'm certain that the better one understands the universe, the better they fair at life. This is about learning to live an inspired life.
 

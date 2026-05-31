@@ -6,7 +6,7 @@ from smolagents import LiteLLMModel
 MIN_CHUNK_CHARS = 400   
 MAX_CHUNK_CHARS = 2000  
 SIMULARITY_MODEL = 'bge-m3' 
-CHAT_MODEL = "ollama/glm4-tool:9b"
+CHAT_MODEL = "ollama/hermes3:8b"
 
 class SemanticChunker:
     def __init__(self, model_name=SIMULARITY_MODEL, min_chars=MIN_CHUNK_CHARS, max_chars=MAX_CHUNK_CHARS, ollama_url="http://localhost:11434"):

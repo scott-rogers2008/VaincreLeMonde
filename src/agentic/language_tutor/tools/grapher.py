@@ -23,8 +23,11 @@ class KnowledgeGrapher:
         """Strips syntax that causes numerical stability (NaN) 500 crashes in Ollama BGE-M3."""
         # 1. Remove markdown images and link text syntax
         text = re.sub(r'!\[.*?\]\(.*?\)', '', text)
-        # 2. Strip heavy markdown table walls (|---|) which mess with positional math
+        # 2. Strip heavy markdown table walls (|---|) and markdown headers which mess with positional math
         text = re.sub(r'\|[\s\-:|]+\|', '', text)
+        text = re.sub(r'-{2,}', ' ', text)
+        text = re.sub(r'={2,}', ' ', text)
+        text = re.sub(r'(?m)^#+\s+', ' ', text)
         # 3. Collapse aggressive tab spaces and clean lines
         return " ".join(text.split())
     
