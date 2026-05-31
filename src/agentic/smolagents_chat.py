@@ -4,7 +4,7 @@ import psycopg
 import json
 import uuid
 from neo4j import GraphDatabase
-from utils import get_git_root
+from agentic.codebase_guru.utils import get_git_root
 from smolagents import CodeAgent, LiteLLMModel, tool
 from smolagents.memory import TaskStep
 

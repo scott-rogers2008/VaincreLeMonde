@@ -126,3 +126,45 @@ class CodebaseGraphManager:
         """
         with self.driver.session() as session:
             session.run(query, file_path=file_path, file_hash=file_hash)
+
+    def sync_chunked_method_data(self, file_path: str, method_name: str, method_data: dict, vector_chunks: list):
+        """
+        Inserts parent method structures and isolates multi-vector chunks
+        using a unique block ID hash to prevent cross-over overwrites.
+        """
+        with self.driver.session() as session:
+            # 1. Generate a unique ID specific to this precise method/class combination
+            # This stops a method query pass from accidentally wiping out its parent class node data!
+            block_id = f"{file_path}:{method_name}:{method_data['body_hash'][:8]}"
+
+            # Clean out past chunk versions specific ONLY to this exact block instance
+            session.run("""
+                MATCH (c:Chunk {block_id: $block_id})
+                DETACH DELETE c
+            """, block_id=block_id)
+
+            # 2. Iterate and append all vector block instances cleanly
+            for v_info in vector_chunks:
+                query = """
+                MATCH (f:File {path: $file_path})
+                MERGE (f)-[:CONTAINS]->(m:Method {name: $method_name})
+                SET m.body_hash = $body_hash
+                
+                CREATE (c:Chunk {
+                    block_id: $block_id,
+                    text: $chunk_text,
+                    index: $chunk_idx,
+                    embedding: $vector
+                })
+                CREATE (m)-[:HAS_CHUNK]->(c)
+                """
+                session.run(
+                    query,
+                    file_path=file_path,
+                    method_name=method_name,
+                    body_hash=method_data["body_hash"],
+                    block_id=block_id,
+                    chunk_text=v_info["chunk_text"],
+                    chunk_idx=v_info["chunk_index"],
+                    vector=v_info["vector"]
+                )

@@ -1,6 +1,5 @@
 import os
-import json
-from ..utils import get_git_root
+from utils import get_git_root
 
 class AdvancedMetaPrompter:
     def __init__(self):
@@ -38,7 +37,6 @@ class AdvancedMetaPrompter:
         """Safely reads file strings handling potential cross-OS encodings."""
         full_path = os.path.abspath(os.path.join(self.git_root, relative_path))
         if not os.path.exists(full_path):
-            # Try sliding into src/ if the base anchor is offset
             full_path = os.path.abspath(os.path.join(self.git_root, "src", relative_path))
             if not os.path.exists(full_path):
                 return f"// File not found on local disk storage: {relative_path}"
@@ -51,76 +49,158 @@ class AdvancedMetaPrompter:
         except Exception as e:
             return f"// Error extracting file block context: {e}"
 
-    def generate_refactoring_prompt(self, target_file_path: str, improvement_goal: str) -> str:
+    def generate_refactoring_prompt(self, target_area: str, improvement_goal: str) -> list:
         """
-        Gathers the target code file, scans for core connected pipeline tools,
-        and builds a high-density, context-complete blueprint engineering prompt.
+        Scans a target area, aggregates files, and splits the engineering prompt
+        into a list of safely-sized context chunks to prevent 'Request Too Large' errors.
         """
         stats = self._analyze_tutor_infrastructure()
-        
-        # 1. Read the exact live file you want to change
-        primary_code = self._safe_read_file(target_file_path)
-        
-        # 2. DYNAMIC LOOKUP: Automatically pack critical infrastructure tools 
-        # so the model can verify cross-file signatures and import boundaries
+        full_area_path = os.path.abspath(os.path.join(self.git_root, target_area))
+        if not os.path.exists(full_area_path):
+            full_area_path = os.path.abspath(os.path.join(self.git_root, "src", target_area))
+            if not os.path.exists(full_area_path):
+                return ["❌ Error: Could not locate target area or directory."]
+
+        # Gather target codebase files
+        packaged_files = []
+        if os.path.isdir(full_area_path):
+            for root, _, files in os.walk(full_area_path):
+                for file in files:
+                    if file.endswith(('.py', '.ts', '.tsx', '.js', '.jsx')):
+                        abs_p = os.path.join(root, file)
+                        rel_p = os.path.relpath(abs_p, self.git_root).replace("\\", "/")
+                        packaged_files.append((rel_p, self._safe_read_file(rel_p)))
+        else:
+            rel_p = os.path.relpath(full_area_path, self.git_root).replace("\\", "/")
+            packaged_files.append((rel_p, self._safe_read_file(rel_p)))
+
+        # Read backend drivers
         parser_code = self._safe_read_file("agentic/codebase_guru/tools/parser.py")
         db_code = self._safe_read_file("agentic/codebase_guru/tools/graph_db.py")
         sync_code = self._safe_read_file("agentic/codebase_guru/tools/git_sync.py")
-        
-        prompt = f"""### SYSTEM INSTRUCTION
-You are a Principal Software Architect specializing in advanced agentic infrastructure and human learning systems.
-We are modifying a complex multi-language codebase (Python and TypeScript) using a local Neo4j vector graph layer. 
 
-Your objective is to provide a production-ready, typed implementation resolving the modification goal. You are provided with the absolute full contents of the primary files involved to eliminate guesswork regarding import pipelines or existing schema definitions.
+        # --------------------------------------------------------------------
+        # 📦 BUILD PART 1: THE CORE ARCHITECTURAL INSTRUCTIONS
+        # --------------------------------------------------------------------
+        part1 = f"""### 🎓 SYSTEM INSTRUCTION (PART 1 OF MULTI-PART CONTEXT)
+You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. 
+I am going to feed you our repository context across multiple messages because the payload is too large for a single request. 
 
----
-
-### 📊 ENVIRONMENT STATS
-* **Repository Root**: `{self.git_root}`
-* **Total Mapped Footprint**: {stats['total_files']} files ({stats['python_files']} Python, {stats['typescript_files']} TypeScript)
+DO NOT generate code yet. Simply acknowledge that you have received Part 1 and wait for the remaining source files.
 
 ---
+### 📊 ENVIRONMENT PROFILE
+* Target Area: `{target_area}`
+* Total Files: {stats['total_files']} ({stats['python_files']} Python, {stats['typescript_files']} TypeScript)
 
-### 🎯 REFURBISHMENT TARGET
-* **Primary Target File**: `{target_file_path}`
-* **Improvement Goal**: 
+---
+### 🎯 INTEGRATION OBJECTIVE
 > {improvement_goal}
 
 ---
+### 🔌 BACKEND SHARED DRIVERS
+Here is the baseline infrastructure tracking our files, hashes, and graph nodes:
 
-### 📝 FULL LIVE FILE SOURCE (THE TARGET TO REWRITE)
-Below is the complete active code for `{target_file_path}`:
-```python
-{primary_code}
-```
-
----
-
-### 🔌 DECOUPLED PIPELINE CONTEXT (FOR IMPORT & DATA ALIGNMENT)
-To guarantee your refactored code aligns perfectly with our path rules, hash utilities, and database schemas, use the live implementations of our background tool modules below as your absolute reference:
-
-#### 1. File Tracker (`agentic/codebase_guru/tools/parser.py`)
+#### 📂 File Parser (`agentic/codebase_guru/tools/parser.py`)
 ```python
 {parser_code}
 ```
 
-#### 2. Neo4j Graph Driver (`agentic/codebase_guru/tools/graph_db.py`)
+#### 📂 Graph Driver (`agentic/codebase_guru/tools/graph_db.py`)
 ```python
 {db_code}
 ```
 
-#### 3. Differential Sync Manager (`agentic/codebase_guru/tools/git_sync.py`)
+#### 📂 Sync Utility (`agentic/codebase_guru/tools/git_sync.py`)
 ```python
 {sync_code}
 ```
+"""
+        chunks = [part1]
+
+        # --------------------------------------------------------------------
+        # 📦 BUILD PARTS 2+: BATCH TARGET AREA FILES (Max 2 files per message chunk)
+        # --------------------------------------------------------------------
+        current_chunk_text = ""
+        files_in_current_chunk = 0
+        chunk_counter = 2
+
+        for rel_p, contents in packaged_files:
+            file_block = f"### 📄 TARGET AREA SOURCE: `{rel_p}`\n```text\n{contents}\n```\n\n"
+            current_chunk_text += file_block
+            files_in_current_chunk += 1
+
+            # When a chunk hits our limit, wrap it and start a new one
+            if files_in_current_chunk >= 2:
+                chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter})
+Here is the next batch of active source files from our target development area.
+Please ingest them into your system memory map. Do not implement the solution yet. Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
 
 ---
+{current_chunk_text}
+"""
+                chunks.append(chunk_payload)
+                chunk_counter += 1
+                current_chunk_text = ""
+                files_in_current_chunk = 0
 
+        # Catch any trailing files left over
+        if current_chunk_text:
+            chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter} - FINAL)
+Here is the final batch of target area files. 
+Now that you have the entire system context, codebases, and tool chains, please generate the required deliverables.
+
+---
+{current_chunk_text}
+"""
+            chunks.append(chunk_payload)
+
+        return chunks
+
+    def export_prompt_to_file(self, prompt_chunks: list, filename_base="refactor_blueprint"):
+        """Saves chunks into separate files so you can copy/paste them sequentially."""
+        for idx, chunk in enumerate(prompt_chunks, 1):
+            filename = f"{filename_base}_part{idx}.md"
+            output_path = os.path.join(self.git_root, filename)
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(chunk)
+            print(f"📁 Exported: {filename}")
+
+    def generate_escalation_prompt(self, failed_task: str, loop_history: str, graph_context: str) -> str:
+        """Creates a high-density markdown prompt when the local agent loop fails or traps."""
+        repo_stats = self._analyze_tutor_infrastructure()
+        
+        prompt = f"""### SYSTEM INSTRUCTION
+You are an Elite AI Software Architect specializing in mixed-language system integration (Python and TypeScript).
+A local code-exploration agent running a 14B model encountered a reasoning trap or context ceiling.
+
+Your goal is to inspect the execution logs, resolve code discrepancies, and provide a definitive architectural resolution.
+
+---
+### 📊 REPOSITORY PROFILE
+* **Total Tracked Files**: {repo_stats['total_files']} ({repo_stats['python_files']} Python, {repo_stats['typescript_files']} TypeScript)
+
+---
+### 🎯 MISSION OBJECTIVE
+> {failed_task}
+
+---
+### 🕵️ LOCAL AGENT EXECUTION LOGS
+```text
+{loop_history}
+```
+
+---
+### 🗺️ NEO4J EXTRACTED GRAPH CONTEXT
+```text
+{graph_context}
+```
+
+---
 ### 📥 EXPECTED ARCHITECTURAL RESPONSE FORMAT
-Please process this full-context blueprint payload and return your engineering deliverables:
-1. **Structural Analysis**: Identify any implicit defects, type gaps, or path traps between the primary file and the background modules.
-2. **Complete Refactored Implementation**: Provide the 100% complete, rewritten source file block for the Primary Target File. Do not truncate code or write placeholders like `# ... rest of code`. Every method must be fully written out.
-3. **Graph Update Path**: Provide the exact Cypher or schema directions needed to keep node parameters consistent with your updates.
+1. **Root Cause Diagnosis**: Detail why the local model failed or where the code paths diverge.
+2. **Refactored Code Blueprints**: Provide production-ready, clean, and typed implementations.
+3. **Neo4j Cypher Adjustments**: Provide the exact Neo4j Cypher updates to patch hashes and documentation history.
 """
         return prompt
 
@@ -128,4 +208,4 @@ Please process this full-context blueprint payload and return your engineering d
         output_path = os.path.join(self.git_root, filename)
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(prompt_content)
-        print(f"📁 Context-complete engineering prompt exported to: {output_path}")
+        print(f"📁 High-utility context package exported to: {output_path}")
