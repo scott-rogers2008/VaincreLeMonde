@@ -1,3 +1,5 @@
+# src/agentic/codebase_guru/agents/meta_prompter.py
+
 import os
 from utils import get_git_root
 
@@ -51,15 +53,16 @@ class AdvancedMetaPrompter:
 
     def generate_refactoring_prompt(self, target_area: str, improvement_goal: str) -> list:
         """
-        Scans a target area, aggregates files, and splits the engineering prompt
-        into a list of safely-sized context chunks to prevent 'Request Too Large' errors.
+        Scans a target area, aggregates files, and splits the engineering prompt 
+        into safely-sized context chunks to prevent 'Request Too Large' errors.
         """
         stats = self._analyze_tutor_infrastructure()
         full_area_path = os.path.abspath(os.path.join(self.git_root, target_area))
+        
         if not os.path.exists(full_area_path):
             full_area_path = os.path.abspath(os.path.join(self.git_root, "src", target_area))
-            if not os.path.exists(full_area_path):
-                return ["❌ Error: Could not locate target area or directory."]
+        if not os.path.exists(full_area_path):
+            return ["❌ Error: Could not locate target area or directory."]
 
         # Gather target codebase files
         packaged_files = []
@@ -74,19 +77,35 @@ class AdvancedMetaPrompter:
             rel_p = os.path.relpath(full_area_path, self.git_root).replace("\\", "/")
             packaged_files.append((rel_p, self._safe_read_file(rel_p)))
 
-        # Read backend drivers
-        parser_code = self._safe_read_file("agentic/codebase_guru/tools/parser.py")
-        db_code = self._safe_read_file("agentic/codebase_guru/tools/graph_db.py")
-        sync_code = self._safe_read_file("agentic/codebase_guru/tools/git_sync.py")
+        # Read backend drivers as tuples for granular chunking
+        drivers = [
+            ("agentic/codebase_guru/tools/parser.py", self._safe_read_file("agentic/codebase_guru/tools/parser.py")),
+            ("agentic/codebase_guru/tools/graph_db.py", self._safe_read_file("agentic/codebase_guru/tools/graph_db.py")),
+            ("agentic/codebase_guru/tools/git_sync.py", self._safe_read_file("agentic/codebase_guru/tools/git_sync.py"))
+        ]
+
+        chunks = []
+        chunk_counter = 1
 
         # --------------------------------------------------------------------
-        # 📦 BUILD PART 1: THE CORE ARCHITECTURAL INSTRUCTIONS
+        # 📦 BUILD BASELINE INFRASTRUCTURE CHUNKS (Drivers are split safely)
         # --------------------------------------------------------------------
-        part1 = f"""### 🎓 SYSTEM INSTRUCTION (PART 1 OF MULTI-PART CONTEXT)
-You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. 
-I am going to feed you our repository context across multiple messages because the payload is too large for a single request. 
-
-DO NOT generate code yet. Simply acknowledge that you have received Part 1 and wait for the remaining source files.
+        current_driver_text = ""
+        drivers_in_chunk = 0
+        
+        for rel_p, contents in drivers:
+            # Skip appending if file wasn't found or is empty to save space
+            if "File not found" in contents:
+                continue
+            
+            current_driver_text += f"#### 📂 Driver: `{rel_p}`\n```python\n{contents}\n```\n\n"
+            drivers_in_chunk += 1
+            
+            # Split drivers if they are large (Max 1 major tool driver per chunk)
+            if drivers_in_chunk >= 1:
+                part_driver = f"""### 🎓 SYSTEM INSTRUCTION (PART {chunk_counter} OF MULTI-PART CONTEXT)
+You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System.
+DO NOT generate code yet. Acknowledge receipt of Part {chunk_counter} and wait for the remaining payload.
 
 ---
 ### 📊 ENVIRONMENT PROFILE
@@ -98,43 +117,35 @@ DO NOT generate code yet. Simply acknowledge that you have received Part 1 and w
 > {improvement_goal}
 
 ---
-### 🔌 BACKEND SHARED DRIVERS
-Here is the baseline infrastructure tracking our files, hashes, and graph nodes:
-
-#### 📂 File Parser (`agentic/codebase_guru/tools/parser.py`)
-```python
-{parser_code}
-```
-
-#### 📂 Graph Driver (`agentic/codebase_guru/tools/graph_db.py`)
-```python
-{db_code}
-```
-
-#### 📂 Sync Utility (`agentic/codebase_guru/tools/git_sync.py`)
-```python
-{sync_code}
-```
+### 🔌 BACKEND SHARED DRIVERS (BATCH)
+{current_driver_text}
 """
-        chunks = [part1]
+                chunks.append(part_driver)
+                chunk_counter += 1
+                current_driver_text = ""
+                drivers_in_chunk = 0
+
+        # Catch remaining driver if any
+        if current_driver_text:
+            part_driver = f"""### 🎓 SYSTEM INSTRUCTION (PART {chunk_counter} OF MULTI-PART CONTEXT)\n{current_driver_text}"""
+            chunks.append(part_driver)
+            chunk_counter += 1
 
         # --------------------------------------------------------------------
-        # 📦 BUILD PARTS 2+: BATCH TARGET AREA FILES (Max 2 files per message chunk)
+        # 📦 BUILD TARGET AREA FILE CHUNKS (Max 2 files per message chunk)
         # --------------------------------------------------------------------
         current_chunk_text = ""
         files_in_current_chunk = 0
-        chunk_counter = 2
 
         for rel_p, contents in packaged_files:
             file_block = f"### 📄 TARGET AREA SOURCE: `{rel_p}`\n```text\n{contents}\n```\n\n"
             current_chunk_text += file_block
             files_in_current_chunk += 1
 
-            # When a chunk hits our limit, wrap it and start a new one
             if files_in_current_chunk >= 2:
                 chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter})
-Here is the next batch of active source files from our target development area.
-Please ingest them into your system memory map. Do not implement the solution yet. Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
+Here is the next batch of active source files from our target development area. 
+Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
 
 ---
 {current_chunk_text}
@@ -147,8 +158,7 @@ Please ingest them into your system memory map. Do not implement the solution ye
         # Catch any trailing files left over
         if current_chunk_text:
             chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter} - FINAL)
-Here is the final batch of target area files. 
-Now that you have the entire system context, codebases, and tool chains, please generate the required deliverables.
+Here is the final batch of target area files. Please process the system context and generate the required deliverables.
 
 ---
 {current_chunk_text}
@@ -204,8 +214,3 @@ Your goal is to inspect the execution logs, resolve code discrepancies, and prov
 """
         return prompt
 
-    def export_prompt_to_file(self, prompt_content: str, filename="refactor_blueprint.md"):
-        output_path = os.path.join(self.git_root, filename)
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(prompt_content)
-        print(f"📁 High-utility context package exported to: {output_path}")

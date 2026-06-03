@@ -1,4 +1,5 @@
-# tools/embeddings.py
+# src/agentic/language_tutor/tools/embeddings.py
+
 import ollama
 from smolagents import tool
 

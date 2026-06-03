@@ -1,3 +1,5 @@
+# src/agentic/codebase_guru/main.py
+
 import os
 from tools.parser import CodebaseParser
 from tools.embedder import LocalEmbedder

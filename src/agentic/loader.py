@@ -1,3 +1,5 @@
+# src/agentic/loader.py
+
 ###
 ### loader.py -- loads all of the md files into neo4j graphs preperatory for other agents to use it as a graphRAG
 ###      it uses chunk_agent.py to break up the md files into semantic chunks to help facilitate vector searches

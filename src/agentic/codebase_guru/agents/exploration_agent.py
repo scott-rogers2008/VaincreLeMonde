@@ -1,3 +1,9 @@
+# src/agentic/codebase_guru/agents/exploration_agent.py
+
+# This agent is designed to explore a codebase using a Neo4j Vector Graph and a set of tools. 
+# It interacts with the Ollama API to generate structured outputs that guide its exploration process. 
+# The agent is resilient to parsing issues and includes detailed diagnostics for network interactions and response handling.
+
 import json
 import urllib.request
 import re

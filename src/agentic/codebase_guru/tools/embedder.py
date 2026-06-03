@@ -1,3 +1,5 @@
+# src/agentic/codebase_guru/tools/embedder.py
+
 import urllib.request
 import json
 
