@@ -4,7 +4,7 @@ import uuid
 import json
 from sqlalchemy import text as sa_text
 from smolagents import tool
-from agentic.language_tutor.tools.database_manager import engine
+from language_tutor.tools.database_manager import engine
 
 # Static Namespace UUID used to isolate your conversational session logs
 SESSION_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, "user_session_universal_001"))

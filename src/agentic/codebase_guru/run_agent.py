@@ -15,11 +15,41 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
     # ------------------------------------------------------------------------
     # 🎯 MODE 1: TARGETED AREA/DIRECTORY INTERCEPT (LOW-RESOURCE CPU LOOP)
     # ------------------------------------------------------------------------
+
     if target_area:
-        print(f"🛠️ [Targeted Improvement Mode] Packaging context area: {target_area}")
-        print("⏳ Extracting source files and compiling engineering specifications...")
+        print(f"🛠️ [Targeted Improvement Mode] Attempting local focus pass for: {target_area}")
         
-        # Generates a list of safely-sized prompt strings
+        from agentic.codebase_guru.tools.focus_tool import LocalFocusTool
+        focus_tool = LocalFocusTool()
+        
+        # Define standard framework fallbacks for new code dependencies
+        suggested_fallbacks = ["agentic/codebase_guru/tools/graph_db.py", "agentic/codebase_guru/tools/agent_tools.py"]
+        
+        # Assemble the restricted prompt layout
+        focused_local_prompt = focus_tool.build_local_context(
+            target_path=target_area,
+            objective=user_objective,
+            fallbacks=suggested_fallbacks
+        )
+        focus_tool.close()
+
+        # Try executing locally using the 14B model first
+        agent = DeepSeekR1Agent()
+        step_result = agent.execute_step(focused_local_prompt)
+        action = step_result.get("action", {})
+        
+        # Check if the local model handled it correctly or if it got overwhelmed
+        if action and action.get("status") in ["COMPLETE", "CONTINUE"]:
+            if step_result.get("thinking"):
+                print(f"🤔 [Local Thinking Trace]:\n{step_result['thinking']}\n")
+            print(f"✨ [Local Focus Success!]:\n{action}")
+            return # Execution completely satisfied locally!
+            
+        # --- FALLBACK PROTECTION ACCORDING TO PLAN ---
+        print("\n🚨 [Local Loop Overwhelmed or Format Failed]: Escalating context immediately...")
+        print("⏳ Running original AdvancedMetaPrompter payload chunking pipelines...")
+        
+        prompter = AdvancedMetaPrompter()
         refactor_chunks = prompter.generate_refactoring_prompt(
             target_area=target_area,
             improvement_goal=user_objective
@@ -28,10 +58,9 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         if refactor_chunks and str(refactor_chunks[0]).startswith("❌"):
             print(refactor_chunks[0])
         else:
-            # Writes out separate files (refactor_blueprint_part1.md, part2.md, etc.)
             prompter.export_prompt_to_file(refactor_chunks)
-            print(f"✨ Success! Context split into {len(refactor_chunks)} parts to prevent server size drops.")
-            print("🛑 GPU Bypassed. Ready for sequential copy-pasting.")
+            print(f"✨ Fallback complete! Context split into {len(refactor_chunks)} parts to prevent server size drops.")
+            print("🛑 Local GPU execution suspended. Ready for sequential copy-pasting to a larger LLM.")
         return
 
     # ------------------------------------------------------------------------
@@ -137,11 +166,12 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         prompter.export_prompt_to_file(escalated_prompt, filename="escalated_prompt.md")
 
 if __name__ == "__main__":
-    # --- CONFIGURE AREA MODE CONTROLS HERE ---
-    # Set AREA_TO_IMPROVE to None to run standard codebase exploration.
-    # Set AREA_TO_IMPROVE to a directory path to bundle an entire folder instantly!
+    # Pull dynamic parameters injected via the universal toolbelt layer
+    INTEGRATION_GOAL = os.environ.get("INTEGRATION_GOAL", "Review suite and unify codebase.")
+    AREA_TO_IMPROVE = os.environ.get("AREA_TO_IMPROVE", None)
     
-    AREA_TO_IMPROVE = "agentic"  # Target an entire folder
-    INTEGRATION_GOAL = "Review suite and unify codebase."
-    
+    # If explicitly run via CLI manually with no variables, use your default directory configuration
+    if not os.environ.get("INTEGRATION_GOAL") and not AREA_TO_IMPROVE:
+        AREA_TO_IMPROVE = "agentic"
+
     run_agent_loop(user_objective=INTEGRATION_GOAL, target_area=AREA_TO_IMPROVE)

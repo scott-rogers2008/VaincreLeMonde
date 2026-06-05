@@ -1,7 +1,7 @@
 # src/agentic/codebase_guru/tools/agent_tools.py
 
-from tools.graph_db import CodebaseGraphManager
-from tools.embedder import LocalEmbedder
+from .graph_db import CodebaseGraphManager
+from .embedder import LocalEmbedder
 
 class AgentTools:
     def __init__(self):
