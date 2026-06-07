@@ -1,4 +1,4 @@
-# codebase_guru/tools/parser.py
+# src/agentic/codebase_guru/tools/parser.py
 
 import ast
 import hashlib

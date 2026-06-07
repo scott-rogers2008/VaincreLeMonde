@@ -1,8 +1,15 @@
 # src/agentic/codebase_guru/run_agent.py
 
 import os
+import re
 from agents.exploration_agent import DeepSeekR1Agent
 from agents.meta_prompter import AdvancedMetaPrompter
+
+def contains_valid_code_block(text: str) -> bool:
+    """Verifies that the local model actually returned functional markdown code blocks."""
+    if not text:
+        return False
+    return bool(re.search(r"```(?:python|ts|tsx|js|jsx|json)", text))
 
 def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int = 4):
     """
@@ -19,7 +26,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
     if target_area:
         print(f"🛠️ [Targeted Improvement Mode] Attempting local focus pass for: {target_area}")
         
-        from agentic.codebase_guru.tools.focus_tool import LocalFocusTool
+        from tools.focus_tool import LocalFocusTool
         focus_tool = LocalFocusTool()
         
         # Define standard framework fallbacks for new code dependencies
@@ -36,14 +43,21 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         # Try executing locally using the 14B model first
         agent = DeepSeekR1Agent()
         step_result = agent.execute_step(focused_local_prompt)
+        thinking = step_result.get("thinking", "")
         action = step_result.get("action", {})
+        raw_content = step_result.get("content", "")
         
-        # Check if the local model handled it correctly or if it got overwhelmed
-        if action and action.get("status") in ["COMPLETE", "CONTINUE"]:
-            if step_result.get("thinking"):
-                print(f"🤔 [Local Thinking Trace]:\n{step_result['thinking']}\n")
-            print(f"✨ [Local Focus Success!]:\n{action}")
-            return # Execution completely satisfied locally!
+        if thinking:
+            print(f"🤔 [Local Thinking Trace]:\n{thinking}\n")
+
+        # STRICT EVALUATION: Did it return structured actions OR a definitive markdown code payload?
+        is_complete = action.get("status") == "COMPLETE" if isinstance(action, dict) else False
+        has_code = contains_valid_code_block(raw_content) or contains_valid_code_block(str(action))
+
+        if is_complete or has_code:
+            print(f"✨ [Local Focus Success!]: Content successfully generated inside parameters.")
+            print(raw_content if raw_content else action)
+            return
             
         # --- FALLBACK PROTECTION ACCORDING TO PLAN ---
         print("\n🚨 [Local Loop Overwhelmed or Format Failed]: Escalating context immediately...")
@@ -60,7 +74,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         else:
             prompter.export_prompt_to_file(refactor_chunks)
             print(f"✨ Fallback complete! Context split into {len(refactor_chunks)} parts to prevent server size drops.")
-            print("🛑 Local GPU execution suspended. Ready for sequential copy-pasting to a larger LLM.")
+            print("⚠️ Local GPU execution suspended. Ready for sequential copy-pasting to a larger LLM.")
         return
 
     # ------------------------------------------------------------------------
@@ -85,6 +99,11 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         step_result = agent.execute_step(user_objective, history_str)
         thinking = step_result.get("thinking", "")
         action = step_result.get("action", {})
+
+        if not isinstance(action, dict) or not action:
+            print("⚠️ Local model failed to output strict tool JSON format.")
+            execution_history.append(f"Step {current_step} Error: Format constraint violation.")
+            break
         
         if thinking:
             print(f"🤔 [Thinking]:\n{thinking}\n")
@@ -107,7 +126,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
             # LOOP GUARD CHECKPOINT: If the model repeats itself, force a circuit break
             if loop_fingerprint in seen_tool_arguments:
                 print(f"🚨 [Loop Guard Triggered]: Agent is spinning on tool query '{loop_fingerprint}'!")
-                print("🛑 Forcing an automatic system escalation to protect local GPU resources...")
+                print("⚠️ Forcing an automatic system escalation to protect local GPU resources...")
                 execution_history.append(f"Step {current_step} Block: Guardrail cut off repetitive execution of tool parameter '{tool_arg}'.")
                 break
                 

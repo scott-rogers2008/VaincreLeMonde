@@ -1,6 +1,8 @@
+# src/agentic/codebase_guru/tools/force_sync.py
+
 import subprocess
 import os
-from ..utils import get_git_root
+from .utils import get_git_root
 
 def force_git_reindex():
     git_root = os.path.abspath(get_git_root(os.curdir))

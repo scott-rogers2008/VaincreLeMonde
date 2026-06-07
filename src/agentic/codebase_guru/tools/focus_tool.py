@@ -1,7 +1,9 @@
 # src/agentic/codebase_guru/tools/focus_tool.py
+
 import os
-from ..utils import get_git_root
-from graph_db import CodebaseGraphManager
+from pathlib import Path
+from .utils import get_git_root
+from .graph_db import CodebaseGraphManager
 
 class LocalFocusTool:
     def __init__(self):
@@ -10,56 +12,65 @@ class LocalFocusTool:
 
     def build_local_context(self, target_path: str, objective: str, fallbacks: list = None) -> str:
         """
-        Builds a compact prompt for the local 14B model.
-        Reads file text if it exists, or pulls API hooks from Neo4j if it is a new file.
+        Builds a compact prompt for local execution, ensuring absolute path 
+        safety on Windows environments.
         """
-        clean_path = target_path.replace("\\", "/")
-        db_path = clean_path[4:] if clean_path.startswith("src/") else clean_path
+        # 1. Clean and normalize the paths using Pathlib to eliminate cross-slash mixing
+        raw_path = Path(target_path.replace("\\", "/"))
         
-        full_disk_path = os.path.join(self.git_root, target_path if target_path.startswith("src/") else f"src/{target_path}")
+        # Strip 'src' if it was explicitly passed to create a clean DB path uniform key
+        if raw_path.parts and raw_path.parts[0] == "src":
+            db_path = str(Path(*raw_path.parts[1:]).as_posix())
+        else:
+            db_path = str(raw_path.as_posix())
+
+        # Construct the absolute path natively for Windows filesystem operations
+        full_disk_path = os.path.normpath(os.path.join(self.git_root, "src", db_path))
+        
         file_exists = os.path.exists(full_disk_path)
         context_lines = []
 
         if file_exists:
-            # Existing File Mode
             try:
                 with open(full_disk_path, "r", encoding="utf-8", errors="replace") as f:
                     file_body = f.read()
             except Exception as e:
-                file_body = f"# Error reading file: {e}"
-            code_block = f"```python\n{file_body}\n```"
+                file_body = f"# Error reading file contents: {e}"
+            
+            code_block = f"```python\n{file_body}\n```" if db_path.endswith(".py") else f"```text\n{file_body}\n```"
             mode_header = f"[FOCUS TARGET DETECTED: src/{db_path}]"
             
-            # Tiny verification check from Neo4j
+            # Query Neo4j using the normalized posix path string
             cypher = "MATCH (f:File {path: $path})-[:CONTAINS]->(m:Method) RETURN m.name AS name"
             with self.db.driver.session() as s:
                 records = s.run(cypher, path=db_path)
                 methods = [r["name"] for r in records]
-                if methods:
-                    context_lines.append(f"Tracked Graph Components: {', '.join(methods)}")
+            if methods:
+                context_lines.append(f"Tracked Graph Components: {', '.join(methods)}")
         else:
-            # New Greenfield Creation Mode
             code_block = "# [File does not exist yet on local disk storage]"
             mode_header = f"[NEW WORKSPACE CREATION BLUEPRINT: src/{db_path}]"
-            context_lines.append("Target path is new. Pulling related structural interface points:")
+            context_lines.append("Target path is a new module. Pulling structural interface anchors:")
             
             targets = fallbacks if fallbacks else ["agentic/codebase_guru/tools/graph_db.py"]
             for target in targets:
-                t_clean = target.replace("\\", "/")[4:] if target.replace("\\", "/").startswith("src/") else target.replace("\\", "/")
+                t_raw = Path(target.replace("\\", "/"))
+                t_db = str(Path(*t_raw.parts[1:]).as_posix()) if t_raw.parts and t_raw.parts[0] == "src" else str(t_raw.as_posix())
+                
                 cypher = "MATCH (f:File {path: $path})-[:CONTAINS]->(m:Method) RETURN m.name AS name"
                 with self.db.driver.session() as s:
-                    res = s.run(cypher, path=t_clean)
+                    res = s.run(cypher, path=t_db)
                     methods = [r["name"] for r in res]
-                    if methods:
-                        context_lines.append(f" - Interface hooks from src/{t_clean}: {', '.join(methods)}")
+                if methods:
+                    context_lines.append(f" - Interface hooks from src/{t_db}: {', '.join(methods)}")
 
         context_payload = "\n".join(context_lines) if context_lines else "No direct database dependencies mapped."
 
         return f"""{mode_header}
-You are an execution brain operating within local hardware bounds (RTX 3060 / 8K context max).
-Focus strictly on the target objective for the destination module specified below.
+You are an expert software developer code-generation engine operating locally on hardware context.
+Review the file context provided below and solve the user objective.
 
-[DESTINATION MODULE TARGET]
+[DESTINATION TARGET MODULE]
 src/{db_path}
 
 [STRUCTURAL CONTEXT & DEPENDENCIES]
@@ -71,9 +82,9 @@ src/{db_path}
 [OBJECTIVE]
 > {objective}
 
-[CRITICAL DIRECTIVES]
-1. Output exact, concise modifications or creations suited for the target path.
-2. Keep code implementations clean, production-ready, and wrapped in standard markdown blocks.
+[CRITICAL INSTRUCTION]
+Your response must contain actual code modifications, additions, or full structural updates inside markdown code blocks. 
+Do not suggest fixes in conversational text. If you can't output valid code blocks to solve this objective, you must fail the step.
 """
 
     def close(self):

@@ -1,7 +1,7 @@
 # src/agentic/codebase_guru/agents/meta_prompter.py
 
 import os
-from utils import get_git_root
+from .utils import get_git_root
 
 class AdvancedMetaPrompter:
     def __init__(self):

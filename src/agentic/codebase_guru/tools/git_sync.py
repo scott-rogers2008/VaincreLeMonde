@@ -4,7 +4,7 @@ import os
 from .parser import CodebaseParser
 from .embedder import LocalEmbedder
 from .graph_db import CodebaseGraphManager
-from ..utils import get_git_root
+from .utils import get_git_root
 
 class GitSyncManager:
     def __init__(self):
