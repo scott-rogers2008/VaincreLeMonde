@@ -170,3 +170,28 @@ class CodebaseGraphManager:
                     chunk_idx=v_info["chunk_index"],
                     vector=v_info["vector"]
                 )
+
+    def purge_file_cascade(self, file_path: str) -> bool:
+        """
+        Safely removes a File node and all of its associated structural Methods, 
+        Chunks, and Documentation nodes to prevent dead clutter in the graph network.
+        """
+        query = """
+        MATCH (f:File {path: $file_path})
+        // 1. Trace and detach any related structural components
+        OPTIONAL MATCH (f)-[:CONTAINS]->(m:Method)
+        OPTIONAL MATCH (m)-[:HAS_CHUNK]->(c:Chunk)
+        OPTIONAL MATCH (m)-[:CURRENT_DOC|HISTORICAL_DOC]->(d:Documentation)
+        
+        // 2. Clear out the entire connected subgraph chunk sequence cleanly
+        DETACH DELETE f, m, c, d
+        RETURN count(f) > 0 AS purged
+        """
+        try:
+            with self.driver.session() as session:
+                result = session.run(query, file_path=file_path)
+                record = result.single()
+                return record["purged"] if record else False
+        except Exception as e:
+            print(f"❌ Failed graph cascade purge pass for '{file_path}': {e}")
+            return False

@@ -65,3 +65,27 @@ class LocalEmbedder:
                 print(f"❌ Failed chunk generation pass: {e}")
                 
         return vector_results
+
+    def get_embedding(self, text: str) -> list:
+        """Generates a single vector embedding for a raw query string without chunking loops."""
+        if not text or not text.strip():
+            return []
+            
+        payload = {
+            "model": self.model_name,
+            "prompt": text.strip()
+        }
+        try:
+            json_bytes = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+            req = urllib.request.Request(
+                self.api_url, 
+                data=json_bytes, 
+                headers={'Content-Type': 'application/json; charset=utf-8'}
+            )
+            with urllib.request.urlopen(req, timeout=30) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                # Return the raw 768-dimension vector list directly
+                return res_data["embedding"]
+        except Exception as e:
+            print(f"❌ Single query embedding generation failed: {e}")
+            return []

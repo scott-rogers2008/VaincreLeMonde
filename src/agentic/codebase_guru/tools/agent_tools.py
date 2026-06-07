@@ -1,5 +1,6 @@
 # src/agentic/codebase_guru/tools/agent_tools.py
-
+import json
+import urllib
 from .graph_db import CodebaseGraphManager
 from .embedder import LocalEmbedder
 
@@ -7,6 +8,8 @@ class AgentTools:
     def __init__(self):
         self.db = CodebaseGraphManager()
         self.embedder = LocalEmbedder()
+
+# src/agentic/codebase_guru/tools/embedder.py
 
     def search_semantic_code(self, user_query: str, limit: int = 3) -> str:
         """

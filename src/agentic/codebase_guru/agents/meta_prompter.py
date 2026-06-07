@@ -134,6 +134,7 @@ DO NOT generate code yet. Acknowledge receipt of Part {chunk_counter} and wait f
         # --------------------------------------------------------------------
         # 📦 BUILD TARGET AREA FILE CHUNKS (Max 2 files per message chunk)
         # --------------------------------------------------------------------
+        MAX_CHUNK_CHARS = 7000
         current_chunk_text = ""
         files_in_current_chunk = 0
 
@@ -142,7 +143,7 @@ DO NOT generate code yet. Acknowledge receipt of Part {chunk_counter} and wait f
             current_chunk_text += file_block
             files_in_current_chunk += 1
 
-            if files_in_current_chunk >= 2:
+            if len(current_chunk_text) + len(file_block) > MAX_CHUNK_CHARS and current_chunk_text.strip():
                 chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter})
 Here is the next batch of active source files from our target development area. 
 Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
@@ -156,7 +157,7 @@ Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
                 files_in_current_chunk = 0
 
         # Catch any trailing files left over
-        if current_chunk_text:
+        if current_chunk_text.strip():
             chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter} - FINAL)
 Here is the final batch of target area files. Please process the system context and generate the required deliverables.
 
