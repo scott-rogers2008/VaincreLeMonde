@@ -1,20 +1,9 @@
-from smolagents import tool
+# src/agentic/language_tutor/tools/library_tools.py
 from sqlalchemy import text
 from .database_manager import engine
 
-@tool
 def register_work(title: str, lang_id: int, work_type: str, source_url: str, path: str, author: str = None, parent_id: int = None) -> str:
-    """
-    Creates a new entry in 'literary_works' and returns the new Work ID.
-    Args:
-        title: The name of the story, book, or chapter.
-        lang_id: The integer ID from the language table.
-        work_type: Must be 'SERIES', 'BOOK', 'CHAPTER', or 'SHORT_STORY'.
-        author: Optional name of the author.
-        parent_id: Optional ID of the parent work (e.g., the Book ID if this is a Chapter).
-        source_url: url of source from which the text came from
-        path: local path of text in references
-    """
+    """Creates a new record entry in the 'literary_works' master relational data table."""
     try:
         with engine.connect() as conn:
             query = text("""
@@ -23,7 +12,7 @@ def register_work(title: str, lang_id: int, work_type: str, source_url: str, pat
                 RETURNING id;
             """)
             result = conn.execute(query, {
-                "title": title, "lang": lang_id, "type": work_type.upper(), 
+                "title": title, "lang": lang_id, "type": work_type.upper(),
                 "author": author, "parent": parent_id, "url": source_url, "path": path
             })
             new_id = result.fetchone()[0]
@@ -32,18 +21,13 @@ def register_work(title: str, lang_id: int, work_type: str, source_url: str, pat
     except Exception as e:
         return f"Database Error: {str(e)}"
 
-@tool
 def library_search(search_term: str) -> list:
-    """
-    Searches the 'literary_works' table by title or author.
-    Args:
-        search_term: Part of a title or author name to look for.
-    """
+    """Searches active library columns matching explicit string names."""
     try:
         with engine.connect() as conn:
             query = text("""
-                SELECT id, title, author, work_type, language_id, source_url, local_path 
-                FROM literary_works 
+                SELECT id, title, author, work_type, language_id, source_url, local_path
+                FROM literary_works
                 WHERE title ILIKE :term OR author ILIKE :term
             """)
             results = conn.execute(query, {"term": f"%{search_term}%"}).fetchall()

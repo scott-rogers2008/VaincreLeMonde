@@ -1,109 +1,148 @@
 # src/agentic/loader.py
-
-###
-### loader.py -- loads all of the md files into neo4j graphs preperatory for other agents to use it as a graphRAG
-###      it uses chunk_agent.py to break up the md files into semantic chunks to help facilitate vector searches
-###      and utils has (or will have) useful utilities like get_git_root(<path>) to help find all the files to be loaded.
-###
-
 import os
-from neo4j import GraphDatabase
-from language_tutor.tools.chunker import SemanticChunker
-from language_tutor.tools.grapher import KnowledgeGrapher
-from utils import get_git_root
+import hashlib
+import requests
+from datetime import date
+from falkordb import FalkorDB
+from .language_tutor.tools.chunker import SemanticChunker
+from .utils import get_git_root
 
-os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs',  '.vscode', 'node_modules', 'src'}
-# Note that 'src' is only a temporary exclution, since there aren't any documents beyond that point that I'm ready to include
-
-neo4j_url=os.environ.get("NEO4J_URL")
-username=os.environ.get("NEO4J_USERNAME")
-password=os.environ.get("NEO4J_PASSWORD")
+EMBED_MODEL = "bge-m3"
+OLLAMA_EMBED_URL = "http://localhost:11434/api/embeddings"
+os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs', '.vscode', 'node_modules', 'src'}
 
 class MDFileChangeHandler:
-    def __init__(self, agent_module_path):
-        self.agent_module_path = agent_module_path
+    def __init__(self):
+        # Connect to FalkorDB and mount an isolated graph space for Document RAG
+        self.db = FalkorDB(host='localhost', port=6379)
+        self.graph = self.db.select_graph("document_rag_graph")
+        self.chunker = SemanticChunker()
+
+    def _calculate_file_hash(self, text: str) -> str:
+        return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+    def _get_bge_embedding(self, text: str) -> list:
+        """Fetches 1024D multi-lingual embeddings from your local model."""
+        if not text.strip(): 
+            return [0.0] * 1024
+        try:
+            res = requests.post(OLLAMA_EMBED_URL, json={"model": EMBED_MODEL, "prompt": text}, timeout=30)
+            return res.json()["embeddings"][0] if res.status_code == 200 else [0.0] * 1024
+        except Exception:
+            return [0.0] * 1024
+
+    def initialize_graph_environment(self):
+        """Creates a native 1024-dimension HNSW index inside FalkorDB."""
+        try:
+            self.graph.query(
+                "CREATE VECTOR INDEX FOR (c:Chunk) ON (c.embedding) "
+                "OPTIONS {dimension: 1024, similarityFunction: 'cosine'}"
+            )
+            print("✅ FalkorDB multi-lingual vector indexing space active.")
+        except Exception:
+            pass
+
+    def purge_document_cascade(self, relative_path: str):
+        """Removes downstream semantic text nodes cleanly to avoid stale data clutter."""
+        query = """
+            MATCH (d:Document {path: $doc_path})
+            OPTIONAL MATCH (c:Chunk)-[:FROM_DOCUMENT]->(d)
+            DETACH DELETE d, c
+        """
+        self.graph.query(query, {"doc_path": relative_path})
 
     def sync_all(self):
+        """Discovers and parses markdown files using active delta hashing loops."""
         base_dir = get_git_root(os.curdir)
-        driver = GraphDatabase.driver(neo4j_url, auth=(username, password))
-        session = driver.session()
+        self.initialize_graph_environment()
+        
+        # Pull active graph hashes into memory to skip unchanged scripts
+        db_hashes = {}
+        try:
+            res = self.graph.query("MATCH (d:Document) RETURN d.path AS path, d.hash AS hash")
+            for row in res.result_set: 
+                db_hashes[str(row[0]).strip('"')] = str(row[1]).strip('"')
+        except Exception:
+            pass
 
         for root, dirs, files in os.walk(base_dir, topdown=True):
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
-
-            # 1. Create the Directory Backbone
+            
+            # Map structural directories via openCypher
             for d in dirs:
-                dir_path = os.path.join(root, d)
-                parent_path = root
-                
-                # Cypher to link folder to its parent
+                dir_path = os.path.relpath(os.path.join(root, d), base_dir).replace("\\", "/")
+                parent_path = os.path.relpath(root, base_dir).replace("\\", "/")
                 query = """
-                MERGE (p:Directory {path: $parent_path})
-                MERGE (c:Directory {path: $child_path})
-                SET c.name = $name
-                MERGE (c)-[:CHILD_OF]->(p)
+                    MERGE (p:Directory {path: $parent_path})
+                    MERGE (c:Directory {path: $child_path})
+                    SET c.name = $name
+                    MERGE (c)-[:CHILD_OF]->(p)
                 """
-                session.run(query, **{
-                    "parent_path": parent_path, 
-                    "child_path": dir_path, 
-                    "name": d
-                })
+                self.graph.query(query, {"parent_path": parent_path, "child_path": dir_path, "name": d})
 
             for file in files:
-                if ".aider" in file:
+                if ".aider" in file or not file.endswith('.md'): 
                     continue
-                if file.endswith('.md'):
-                    md_file_path = os.path.join(root, file)
-                    print(f"Processing {md_file_path}")
-                    self.process_md_file(md_file_path, session, root)
+                    
+                full_md_path = os.path.join(root, file)
+                db_rel_path = os.path.relpath(full_md_path, base_dir).replace("\\", "/")
+                db_parent_dir = os.path.relpath(root, base_dir).replace("\\", "/")
+                
+                try:
+                    with open(full_md_path, 'r', encoding='utf-8') as f: 
+                        document_text = f.read()
+                except UnicodeDecodeError:
+                    with open(full_md_path, 'r', encoding='cp1252', errors='replace') as f: 
+                        document_text = f.read()
 
-    def process_md_file(self, md_file_path, session, parent_path):
-        # Read the content of the .md file
-        chunker = SemanticChunker()
-        graper = KnowledgeGrapher()
+                live_file_hash = self._calculate_file_hash(document_text)
+                if db_rel_path in db_hashes and db_hashes[db_rel_path] == live_file_hash:
+                    print(f"  ⏭️ Skipping unchanged file: '{db_rel_path}'")
+                    continue
+                    
+                print(f"  🔄 Changes detected. Indexing document via multi-lingual model...")
+                self.purge_document_cascade(db_rel_path)
+                
+                # Pass clean ISO string properties to track modification states precisely
+                iso_today = date.today().isoformat()
+                doc_query = """
+                    MATCH (dir:Directory {path: $parent_path})
+                    MERGE (d:Document {path: $doc_path})
+                    SET d.title = $title,
+                        d.hash = $file_hash,
+                        d.last_update = $today,
+                        d.source = $source
+                    MERGE (d)-[:CHILD_OF]->(dir)
+                """
+                self.graph.query(doc_query, {
+                    "parent_path": db_parent_dir, "doc_path": db_rel_path, "title": file,
+                    "file_hash": live_file_hash, "today": iso_today, "source": "local_workspace_import"
+                })
 
-        try:
-            with open(md_file_path, 'r', encoding='utf-8') as f:
-                document_text = f.read()
-        except UnicodeDecodeError:
-            # If UTF-8 fails, read it as Windows-1252 which handles 0x93 perfectly
-            with open(md_file_path, 'r', encoding='cp1252', errors='replace') as f:
-                document_text = f.read()
-
-        # Import metadata from folder name
-        metadata = {
-            "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
-            "path": parent_path,
-            "title": md_file_path,
-            "author": "Scott Rogers",
-            "stability": "work in progress", 
-            "type": [os.path.basename(os.path.dirname(md_file_path))]
-        }
-
-        # Call the semantic_chunking and neo4j_nodes_and_relations functions
-        chunks = chunker.chunk_text(text = document_text)
-        graper.create_node_with_links(chunks, metadata)
-
-        # Link the Directory to the File created by the agent
-        # We use MERGE on both to ensure we don't duplicate, 
-        # but the Directory should already exist from sync_all.
-        link_query = """
-        MATCH (d:Directory {path: $parent_path})
-        MATCH (f:Document {source: $source, title: $file_path})
-        MERGE (f)-[:CHILD_OF]->(d)
-        """
-        session.run(link_query, **{
-            "parent_path": parent_path, 
-            "source": "https://github.com/scott-rogers2008/VaincreLeMonde/",
-            "file_path": md_file_path
-        })
+                # Chunk and embed paragraphs using the multi-lingual sliding window configuration
+                chunks = self.chunker.chunk_text(text=document_text)
+                for seq, chunk_body in enumerate(chunks):
+                    chunk_uuid = f"{db_rel_path}:chunk_{seq}"
+                    bge_vector = self._get_bge_embedding(chunk_body)
+                    
+                    # FIXED: Wrapped raw float list in vecf32() inside openCypher call
+                    chunk_query = """
+                        MATCH (d:Document {path: $doc_path})
+                        CREATE (c:Chunk {
+                            chunk_order: $seq,
+                            text: $text,
+                            chunk_id: $chunk_uuid,
+                            embedding: vecf32($vector)
+                        })
+                        CREATE (c)-[:FROM_DOCUMENT]->(d)
+                    """
+                    self.graph.query(chunk_query, {
+                        "doc_path": db_rel_path, "seq": seq, "text": chunk_body,
+                        "chunk_uuid": chunk_uuid, "vector": bge_vector
+                    })
+                print(f"  └── Ingestion complete. Created {len(chunks)} multi-lingual search chunks.")
+        print("✨ Document Knowledge Graph successfully synchronized with FalkorDB!")
 
 if __name__ == "__main__":
-    # Define the path to the agent module
-    agent_module_path = 'src/agentic/chunk_agent.py'
-
-    # Create an instance of MDFileChangeHandler and pass it the agent module path
-    md_file_change_handler = MDFileChangeHandler(agent_module_path)
-
-    # Sync all .md files in the repository root
-    md_file_change_handler.sync_all()
+    md_handler = MDFileChangeHandler()
+    md_handler.sync_all()

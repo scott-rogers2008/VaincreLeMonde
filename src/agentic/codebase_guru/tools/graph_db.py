@@ -1,197 +1,102 @@
 # src/agentic/codebase_guru/tools/graph_db.py
-
-import time
-import os
-from neo4j import GraphDatabase
-
-neo4j_url = os.environ.get("NEO4J_URL")
-username = os.environ.get("NEO4J_USERNAME")
-password = os.environ.get("NEO4J_PASSWORD")
+from falkordb import FalkorDB
 
 class CodebaseGraphManager:
-    def __init__(self, uri=neo4j_url, auth=(username, password)):
-        self.driver = GraphDatabase.driver(uri, auth=auth)
-
+    def __init__(self):
+        # 1. Connect natively to your low-memory FalkorDB container via its port
+        self.db = FalkorDB(host='localhost', port=6379)
+        # 2. Select or create your isolated codebase structure graph space
+        self.graph = self.db.select_graph("codebase_guru")
+        
     def close(self):
-        self.driver.close()
+        # FalkorDB client features automatic thread connection pooling; no manual close needed
+        pass
 
     def initialize_indexes(self):
-        """Creates the required constraints and vector indexes in Neo4j."""
-        with self.driver.session() as session:
-            # 1. Unique Constraints to prevent duplicate active entities
-            session.run("CREATE CONSTRAINT UNIQUE_FILE_PATH IF NOT EXISTS FOR (f:File) REQUIRE f.path IS UNIQUE")
-            
-            # 2. Vector Index for Code Methods (Nomic-embed-text outputs 768 dimensions)
-            session.run("""
-                CREATE VECTOR INDEX method_vector_index IF NOT EXISTS
-                FOR (m:Method) ON (m.embedding)
-                OPTIONS {
-                    indexConfig: {
-                        `vector.dimensions`: 768,
-                        `vector.similarity_function`: 'cosine'
-                    }
-                }
-            """)
-            
-            # 3. Vector Index for Documentation
-            session.run("""
-                CREATE VECTOR INDEX doc_vector_index IF NOT EXISTS
-                FOR (d:Documentation) ON (d.embedding)
-                OPTIONS {
-                    indexConfig: {
-                        `vector.dimensions`: 768,
-                        `vector.similarity_function`: 'cosine'
-                    }
-                }
-            """)
-            print("✅ Constraints and vector indexes verified.")
-
-    def sync_method_and_docs(self, file_path: str, method_data: dict, body_vector: list, doc_vector: list):
-        """
-        Inserts/updates a code method. If the docstring changes, it archives
-        the old documentation using a historical version chain.
-        """
-        timestamp = int(time.time())
-        
-        query = """
-        // 1. Ensure parent file exists
-        MATCH (f:File {path: $file_path})
-        
-        // 2. Merge the Method node uniquely within this file
-        MERGE (f)-[:CONTAINS]->(m:Method {name: $method_name})
-        ON CREATE SET 
-            m.body = $body,
-            m.body_hash = $body_hash,
-            m.embedding = $body_vector,
-            m.created_at = $timestamp
-        ON MATCH SET
-            m.body = $body,
-            m.body_hash = $body_hash,
-            m.embedding = $body_vector,
-            m.updated_at = $timestamp
-
-        // 3. Process Documentation Layer with a subquery
-        WITH m, f
-        OPTIONAL MATCH (m)-[current_rel:CURRENT_DOC]->(old_doc:Documentation)
-        
-        // Use a conditional block to handle doc creation if none exists
-        FOREACH (_ IN CASE WHEN old_doc IS NULL AND $doc_text <> "" THEN [1] ELSE [] END |
-            CREATE (new_doc:Documentation {
-                text: $doc_text,
-                hash: $doc_hash,
-                embedding: $doc_vector,
-                timestamp: $timestamp,
-                is_active: true
-            })
-            CREATE (m)-[:CURRENT_DOC]->(new_doc)
-        )
-        
-        // Use a conditional block to handle documentation version updates
-        FOREACH (_ IN CASE WHEN old_doc IS NOT NULL AND old_doc.hash <> $doc_hash AND $doc_text <> "" THEN [1] ELSE [] END |
-            // Archive old relationship
-            DELETE current_rel
-            CREATE (m)-[:HISTORICAL_DOC]->(old_doc)
-            SET old_doc.is_active = false
-            
-            // Create new active documentation version
-            CREATE (new_doc:Documentation {
-                text: $doc_text,
-                hash: $doc_hash,
-                embedding: $doc_vector,
-                timestamp: $timestamp,
-                is_active: true
-            })
-            CREATE (m)-[:CURRENT_DOC]->(new_doc)
-            CREATE (new_doc)-[:SUPERSEDES]->(old_doc)
-        )
-        """
-        
-        with self.driver.session() as session:
-            session.run(
-                query,
-                file_path=file_path,
-                method_name=method_data["name"],
-                body=method_data["body"],
-                body_hash=method_data["body_hash"],
-                body_vector=body_vector,
-                doc_text=method_data["docstring"],
-                doc_hash=method_data["doc_hash"],
-                doc_vector=doc_vector,
-                timestamp=timestamp
+        """Creates the required native openCypher vector indexes inside FalkorDB."""
+        # We index the 'embedding' property of Chunk nodes (768 dimensions for Nomic text)
+        try:
+            self.graph.create_vector_index(
+                label="Chunk", 
+                property="embedding", 
+                dim=768, 
+                distance_metric="cosine"
             )
+            print("✅ FalkorDB codebase vector index verified.")
+        except Exception:
+            # Index already exists in container space
+            pass
 
     def sync_file_node(self, file_path: str, file_hash: str):
-        """Upserts a baseline File module node."""
+        """Upserts a baseline module File node using native openCypher."""
         query = """
-        MERGE (f:File {path: $file_path})
-        SET f.hash = $file_hash
+            MERGE (f:File {path: $file_path})
+            SET f.hash = $file_hash
         """
-        with self.driver.session() as session:
-            session.run(query, file_path=file_path, file_hash=file_hash)
+        self.graph.query(query, {"file_path": file_path, "file_hash": file_hash})
 
     def sync_chunked_method_data(self, file_path: str, method_name: str, method_data: dict, vector_chunks: list):
+        """Atomic codebase component structural sync pass optimized for FalkorDB."""
+        body_hash = method_data["body_hash"]
+        block_id_prefix = f"{file_path}:{method_name}:{body_hash[:8]}"
+        
+        # 1. Clear out past block instances cleanly to prevent dead clutter or duplicates
+        purge_query = """
+            MATCH (c:Chunk) 
+            WHERE c.block_id STARTS WITH $block_prefix 
+            DETACH DELETE c
         """
-        Inserts parent method structures and isolates multi-vector chunks
-        using a unique block ID hash to prevent cross-over overwrites.
+        self.graph.query(purge_query, {"block_prefix": block_id_prefix})
+        
+        # 2. Ensure parent method node exists and links back to its file context
+        link_query = """
+            MATCH (f:File {path: $file_path})
+            MERGE (f)-[:CONTAINS]->(m:Method {name: $method_name})
+            SET m.body_hash = $body_hash
         """
-        with self.driver.session() as session:
-            # 1. Generate a unique ID specific to this precise method/class combination
-            # This stops a method query pass from accidentally wiping out its parent class node data!
-            block_id = f"{file_path}:{method_name}:{method_data['body_hash'][:8]}"
+        self.graph.query(link_query, {
+            "file_path": file_path, 
+            "method_name": method_name, 
+            "body_hash": body_hash
+        })
 
-            # Clean out past chunk versions specific ONLY to this exact block instance
-            session.run("""
-                MATCH (c:Chunk {block_id: $block_id})
-                DETACH DELETE c
-            """, block_id=block_id)
+        # 3. Stream structural chunks and their vector data into the container graph
+        for v_info in vector_chunks:
+            idx = v_info["chunk_index"]
+            specific_block_id = f"{block_id_prefix}:chunk_{idx}"
+            chunk_text = v_info["chunk_text"]
+            raw_vector = v_info["vector"] # List of 768 floats from Nomic
 
-            # 2. Iterate and append all vector block instances cleanly
-            for v_info in vector_chunks:
-                query = """
-                MATCH (f:File {path: $file_path})
-                MERGE (f)-[:CONTAINS]->(m:Method {name: $method_name})
-                SET m.body_hash = $body_hash
-                
+            chunk_query = """
+                MATCH (f:File {path: $file_path})-[:CONTAINS]->(m:Method {name: $method_name})
                 CREATE (c:Chunk {
-                    block_id: $block_id,
+                    block_id: $specific_block_id,
                     text: $chunk_text,
                     index: $chunk_idx,
                     embedding: $vector
                 })
                 CREATE (m)-[:HAS_CHUNK]->(c)
-                """
-                session.run(
-                    query,
-                    file_path=file_path,
-                    method_name=method_name,
-                    body_hash=method_data["body_hash"],
-                    block_id=block_id,
-                    chunk_text=v_info["chunk_text"],
-                    chunk_idx=v_info["chunk_index"],
-                    vector=v_info["vector"]
-                )
+            """
+            self.graph.query(chunk_query, {
+                "file_path": file_path,
+                "method_name": method_name,
+                "specific_block_id": specific_block_id,
+                "chunk_text": chunk_text,
+                "chunk_idx": idx,
+                "vector": raw_vector
+            })
 
     def purge_file_cascade(self, file_path: str) -> bool:
-        """
-        Safely removes a File node and all of its associated structural Methods, 
-        Chunks, and Documentation nodes to prevent dead clutter in the graph network.
-        """
+        """Removes a File node and all downstream method chunks atomically from FalkorDB."""
         query = """
-        MATCH (f:File {path: $file_path})
-        // 1. Trace and detach any related structural components
-        OPTIONAL MATCH (f)-[:CONTAINS]->(m:Method)
-        OPTIONAL MATCH (m)-[:HAS_CHUNK]->(c:Chunk)
-        OPTIONAL MATCH (m)-[:CURRENT_DOC|HISTORICAL_DOC]->(d:Documentation)
-        
-        // 2. Clear out the entire connected subgraph chunk sequence cleanly
-        DETACH DELETE f, m, c, d
-        RETURN count(f) > 0 AS purged
+            MATCH (f:File {path: $file_path})
+            OPTIONAL MATCH (f)-[:CONTAINS]->(m:Method)
+            OPTIONAL MATCH (m)-[:HAS_CHUNK]->(c:Chunk)
+            DETACH DELETE f, m, c
+            RETURN count(f) > 0 AS purged
         """
-        try:
-            with self.driver.session() as session:
-                result = session.run(query, file_path=file_path)
-                record = result.single()
-                return record["purged"] if record else False
-        except Exception as e:
-            print(f"❌ Failed graph cascade purge pass for '{file_path}': {e}")
-            return False
+        res = self.graph.query(query, {"file_path": file_path})
+        # Check matrix result set to evaluate if a node was deleted
+        for record in res.result_set:
+            return bool(record)
+        return False
