@@ -7,7 +7,7 @@
 import json
 import urllib.request
 import re
-from tools.agent_tools import AgentTools
+from ..tools.agent_tools import AgentTools
 
 class DeepSeekR1Agent:
     def __init__(self, model_name="deepseek-r1:14b", ollama_host="http://localhost:11434"):
