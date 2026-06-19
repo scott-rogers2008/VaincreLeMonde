@@ -15,49 +15,55 @@ class GitSyncManager:
         self.db = CodebaseGraphManager()
 
     def get_modified_and_untracked_files(self) -> list:
+        """
+        Queries Git status porcelain to catch all un-staged modifications 
+        and raw untracked files instantly without requiring 'git add'.
+        """
         files_to_sync = set()
         target_extensions = ('.py', '.ts', '.tsx', '.js', '.jsx')
+        
         try:
-            tracked = subprocess.check_output(
-                ["git", "diff", "HEAD", "--name-only"], cwd=self.root_dir, stderr=subprocess.DEVNULL
-            ).decode("utf-8").strip()
-            if tracked:
-                for f in tracked.split("\n"):
-                    if f.lower().endswith(target_extensions):
-                        files_to_sync.add(f)
-
-            untracked = subprocess.check_output(
-                ["git", "status", "--porcelain"], cwd=self.root_dir, stderr=subprocess.DEVNULL
-            ).decode("utf-8").strip()
-            if untracked:
-                for line in untracked.split("\n"):
-                    if line.startswith("??"):
-                        f = line[3:].strip()
-                        if f.lower().endswith(target_extensions):
-                            files_to_sync.add(f)
-
-            recent_commits = subprocess.check_output(
-                ["git", "log", "-n", "5", "--name-only", "--pretty=format:"],
+            # --porcelain is perfect here: 
+            # '??' means untracked new file
+            # ' M' or 'M ' means modified file (staged or unstaged)
+            status_output = subprocess.check_output(
+                ["git", "status", "--porcelain"], 
                 cwd=self.root_dir, stderr=subprocess.DEVNULL
             ).decode("utf-8").strip()
-            if recent_commits:
-                for f in recent_commits.split("\n"):
-                    clean_f = f.strip()
-                    if clean_f.lower().endswith(target_extensions):
-                        files_to_sync.add(clean_f)
+            
+            if status_output:
+                for line in status_output.split("\n"):
+                    if len(line) < 4:
+                        continue
+                    
+                    # Isolate the file path from the Git status prefix code
+                    git_prefix = line[:2]
+                    file_path = line[3:].strip()
+                    
+                    # Strip any surrounding quotes Git might add for special characters
+                    if file_path.startswith('"') and file_path.endswith('"'):
+                        file_path = file_path[1:-1]
+
+                    # Process the target if it matches our active programming domains
+                    if file_path.lower().endswith(target_extensions):
+                        files_to_sync.add(file_path)
+
         except Exception as e:
-            print(f"⚠️ Git comprehensive delta capture failed: {e}")
+            print(f"⚠️ Git comprehensive porcelain status trace failed: {e}")
+            
         return list(files_to_sync)
 
     def sync_deltas(self):
+        """Processes and vectorizes modified or untracked files using FalkorDB fingerprints."""
         changed_files = self.get_modified_and_untracked_files()
         if not changed_files:
-            print("✨ Everything is up to date. No Git deltas found.")
+            print("✨ Everything is up to date. No Git changes found.")
             return
 
-        print(f"📦 Found {len(changed_files)} candidate change scopes. Verifying fingerprints...")
+        print(f"📦 Found {len(changed_files)} active change scopes. Verifying fingerprints...")
         self.db.initialize_indexes()
 
+        # Gather pre-existing signatures natively via FalkorDB openCypher
         existing_hashes = {}
         try:
             res = self.db.graph.query("MATCH (f:File) RETURN f.path AS path, f.hash AS hash")
@@ -72,13 +78,13 @@ class GitSyncManager:
         for rel_path in changed_files:
             full_path = os.path.abspath(os.path.join(self.root_dir, rel_path))
             
-            # CRITICAL FIX: Strip 'src/' prefix immediately if present to align with DB keys!
+            # Normalize path tracking properties to align with structural keys
             db_rel_path = os.path.relpath(full_path, self.root_dir).replace("\\", "/")
             if db_rel_path.startswith("src/"):
                 db_rel_path = db_rel_path[4:]
 
             if not os.path.exists(full_path):
-                # ONLY prompt for removal if the database was actually tracking it!
+                # Only prompt for removal if the graph database was actively tracking it
                 if db_rel_path in existing_hashes:
                     print(f"\n🗑️ Detected Deleted File Reference: 'src/{db_rel_path}'")
                     confirm = input("❓ Remove this file reference from FalkorDB? (y/n): ").strip().lower()
@@ -86,9 +92,6 @@ class GitSyncManager:
                         purged = self.db.purge_file_cascade(db_rel_path)
                         if purged:
                             print(f"✅ Expunged '{db_rel_path}' from FalkorDB.")
-                else:
-                    # It's a historical artifact from git log that isn't in our clean DB; skip silently
-                    pass
                 continue
 
             file_info = self.parser.parse_file(full_path)
