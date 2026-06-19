@@ -6,8 +6,8 @@ import uuid
 import urllib.request
 import tutor_memories as st
 
-from agentic.core.goal_manager import UniversalGoalManager
-from agentic.core.auditor import PedagogicalAuditor
+from core.goal_manager import UniversalGoalManager
+from core.auditor import PedagogicalAuditor
 from codebase_guru.tools.agent_tools import AgentTools
 from language_tutor.tools.library_tools import library_search
 from language_tutor.tools.embeddings import get_embeddings as get_multilingual_embedding
@@ -85,16 +85,20 @@ Return exactly ONE JSON block:
                 if vector_data and isinstance(vector_data, list):
                     sanitized_vector = [float(x) for x in vector_data]
                     res = active_graph_space.query(query, {"vector": sanitized_vector})
+                    
                     if res.result_set:
-                        # Capture the primary search match data
                         row = res.result_set[0]
-                        cited_chunk = str(row[0]) if row[0] is not None else "Doc-Chunk"
-                        tool_out = f"--- Verified Source Document Match: {cited_chunk} (Score: {row[2]:.4f}) ---\n{str(row[1])}"
+                        identity_val = row[0]
+                        text_val = row[1]
+                        score_val = float(row[2])
+                        
+                        cited_chunk = str(identity_val) if identity_val is not None else "Doc-Chunk"
+                        tool_out = f"--- Verified Source Document Match: {cited_chunk} (Score: {score_val:.4f}) ---\n{str(text_val)}"
                     else:
                         tool_out = "Search completed, but no explicit matching document nodes were found."
                 else:
                     tool_out = "Failed to calculate a valid document lookup vector."
-            
+           
             elif action_type == "LIST_METHODS":
                 tool_out = self.code_tools.list_file_contents(param)
             elif action_type == "LIBRARY_SEARCH":
@@ -121,7 +125,61 @@ Return exactly ONE JSON block:
             return f"{final_response}\n\n---\n🛡️ **Pedagogical Audit Trace ID**: `audit_{turn_id}` | **Source Citation**: `{cited_chunk}`"
 
         except Exception as e:
-            return f"⚠️ Audit tracking anomaly caught in execution loop: {str(e)}"
+            error_msg = str(e)
+            
+            # 1. COMPILE HIGH-DENSITY VERBOSE INSPECTION METRICS
+            diagnostic_payload = [
+                f"Exception Message: {error_msg}",
+                f"Exception Type   : {type(e).__name__}"
+            ]
+            
+            if 'res' in locals():
+                diagnostic_payload.append(f"Result Set Type  : {type(res).__name__}")
+                if hasattr(res, 'result_set'):
+                    diagnostic_payload.append(f"Raw Result Set   : {res.result_set}")
+                    if len(res.result_set) > 0:
+                        diagnostic_payload.append(f"First Row Type   : {type(res.result_set[0]).__name__}")
+                        diagnostic_payload.append(f"First Row Items  : {res.result_set[0]}")
+            
+            if 'action' in locals():
+                diagnostic_payload.append(f"Parsed Action JSON: {action}")
+                
+            full_verbose_trace = "\n".join(diagnostic_payload)
+            
+            # Verbatim mirror to terminal stream for instant visibility
+            print("\n================== 🚨 TUTORBOT RUNTIME EXCEPTION TRACE ==================")
+            print(full_verbose_trace)
+            print("=========================================================================\n")
+
+            # 2. TRIGGER DUAL ESCALATION Agent CHANNELS PASSING THE VERBOSE STREAM
+            if "code_tools" in error_msg or "list_file_contents" in error_msg or "result_set" in error_msg or "codebase" in user_input.lower():
+                print("⚡ Triggering Code Refactor Agent escalation chain with verbose trace...")
+                from codebase_guru.code_refactor_agent import run_agent_loop
+                
+                # Pass the exact runtime structural anomalies down to the refactor engine loop
+                agent_proposal = run_agent_loop(
+                    user_objective=(
+                        f"Fix a runtime variable unpacking/attribute mismatch in tutor_engine.py. "
+                        f"Review the full raw trace details here:\n\n{full_verbose_trace}\n\n"
+                        f"Modify the target block to unpack FalkorDB results using safe scalar property indices."
+                    ),
+                    target_area="agentic/tutor_engine.py"
+                )
+                agent_name = "Code Refactor Agent"
+            else:
+                print("⚡ Triggering Document Concept Agent escalation chain...")
+                from document_concept_agent import DocumentConceptAgent
+                doc_agent = DocumentConceptAgent()
+                agent_proposal = doc_agent.execute_document_recovery_loop(
+                    failed_task=f"Resolve database syntax or multi-lingual search issue for request: '{user_input}'",
+                    error_trace=full_verbose_trace
+                )
+                agent_name = "Document Concept Agent"
+                
+            return f"🎓 **TutorBot System Realignment**\n\n" \
+                   f"The system encountered a structural runtime crash: `{error_msg}`.\n" \
+                   f"Control was automatically handed over to the **{agent_name}** to review and fix the workspace state.\n\n" \
+                   f"**Resolution Proposal:**\n\n{agent_proposal}"
 
     def _call_llm_or_fallback_json(self, prompt: str) -> str:
         return self._call_local_llm(prompt)
