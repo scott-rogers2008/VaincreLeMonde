@@ -50,7 +50,7 @@ class KnowledgeGrapher:
             if not cleaned.strip():
                 vector = [0.0] * 1024
             else:
-                vector = ollama.embed(model=self.model_name, input=cleaned)["embeddings"][0]
+                vector = [float(x) for x in ollama.embed(model=self.model_name, input=cleaned)["embeddings"][0]]
                 
             metadata["seq"] = seq
 

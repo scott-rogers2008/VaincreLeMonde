@@ -53,10 +53,14 @@ class CodebaseParser:
         # 1. Calculate relative path natively
         raw_relative_path = os.path.relpath(file_path, self.root_dir)
         
-        # CRITICAL FIX: Explicitly force universal forward slashes immediately!
+        # Explicitly force universal forward slashes immediately!
         relative_path = raw_relative_path.replace("\\", "/")
-               
-        # FIX 2: Handle JavaScript / TypeScript completely separate from Python AST
+        
+        # CRITICAL UNIFICATION FIX: Strip leading 'src/' if present to normalize paths
+        if relative_path.startswith("src/"):
+            relative_path = relative_path[4:]
+
+        # Handle JavaScript / TypeScript completely separate from Python AST
         if file_path.endswith(('.js', '.ts', '.jsx', '.tsx')):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -64,19 +68,15 @@ class CodebaseParser:
             except UnicodeDecodeError:
                 with open(file_path, 'r', encoding='cp1252', errors='replace') as f:
                     source_code = f.read()
-
+            
             file_hash = self.calculate_hash(source_code)
-
             agent_script = os.path.join(self.root_dir, "frontend", "src", "agents", "jsparser.js")
             result = subprocess.run(
-                ['node', agent_script, file_path],
-                capture_output=True,
-                text=True
+                ['node', agent_script, file_path], capture_output=True, text=True
             )
             if result.returncode == 0:
                 try:
                     js_data = json.loads(result.stdout)
-                    # Merge basic file info with what our JS node agent found
                     js_data["file_path"] = relative_path
                     js_data["file_hash"] = file_hash
                     js_data["comments"] = self.extract_comments_manually(file_path)
@@ -95,7 +95,7 @@ class CodebaseParser:
         except UnicodeDecodeError:
             with open(file_path, 'r', encoding='cp1252', errors='replace') as f:
                 source_code = f.read()
-
+                
         file_hash = self.calculate_hash(source_code)
         file_data = {
             "file_path": relative_path,
@@ -104,14 +104,12 @@ class CodebaseParser:
             "functions": [],
             "comments": self.extract_comments_manually(file_path)
         }
-
         try:
             tree = ast.parse(source_code)
         except SyntaxError:
             print(f"⚠️ Syntax error parsing file: {relative_path}. Skipping AST extraction.")
             return file_data
 
-        # Traverse the Abstract Syntax Tree for Python
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 docstring = ast.get_docstring(node) or ""
