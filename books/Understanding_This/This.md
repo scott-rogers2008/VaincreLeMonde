@@ -1,0 +1,3 @@
+# This
+
+This is a text book that you will help to write and ensure is written correctly.  The AI will be there to help you, but the primary goal of this AI is helping you to learn, know, and remember. It is the firm belief of this system that those that learn to rely on AI will always find out how shaky that ground is.  But using it to improve yourself will not only make you better, but more reliable for those whose ground falls out from benieth them as they rely too heavily on faulty AI.

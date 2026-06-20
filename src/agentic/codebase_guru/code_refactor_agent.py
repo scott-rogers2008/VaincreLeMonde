@@ -2,8 +2,8 @@
 import os
 import re
 import sys
-from agentic.codebase_guru.agents.exploration_agent import DeepSeekR1Agent
-from agentic.codebase_guru.agents.meta_prompter import AdvancedMetaPrompter
+from .agents.exploration_agent import DeepSeekR1Agent
+from .agents.meta_prompter import AdvancedMetaPrompter
 
 def contains_valid_code_block(text: str) -> bool:
     if not text:
@@ -19,7 +19,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
     
     # 🎯 MODE 1: TARGETED AREA INTERCEPT
     if target_area:
-        from agentic.codebase_guru.tools.focus_tool import LocalFocusTool
+        from .tools.focus_tool import LocalFocusTool
         focus_tool = LocalFocusTool()
         suggested_fallbacks = ["agentic/codebase_guru/tools/graph_db.py", "agentic/codebase_guru/tools/agent_tools.py"]
         
@@ -112,7 +112,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
             print("⚠️ Local model failed to output strict tool JSON format.")
             execution_history.append(f"Step {current_step} Error: Format constraint violation.")
             break
-        
+
         current_step += 1
         
     agent.tools.close()

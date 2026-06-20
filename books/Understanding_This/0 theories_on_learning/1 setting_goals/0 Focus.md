@@ -1,0 +1,5 @@
+# Focus
+
+“Without goals, and plans to reach them, you are like a ship that has set sail with no destination.”— Fitzhugh Dodson.
+
+Setting goals provides clarity, motivation, a sense of direction, and a way to measure progress towards achieving desired outcomes, ultimately leading to increased focus, accountability, and a feeling of accomplishment when goals are reached. Since our ultimate aim is to reach the infinite potential within us, we need to set intermediate goals to help us focus on each next step needed to eventually get there. Especially since there are so many distractions and challenges to dislodge us and push us off course. There are a lot more challenges to successful achievement than just setting goals, but without even setting the goals all of those challenges become even more difficult to overcome.
