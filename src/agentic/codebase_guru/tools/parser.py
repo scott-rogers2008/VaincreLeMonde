@@ -1,5 +1,4 @@
 # src/agentic/codebase_guru/tools/parser.py
-
 import ast
 import hashlib
 import json
@@ -7,10 +6,9 @@ import os
 import subprocess
 
 os_walk_exclude = {
-    '.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', 
-    '.vs', '.angular', '.vscode', 'node_modules', "angular",
-    'dist', 'browser', 'out', 'build'
+    '.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs', '.angular', '.vscode', 'node_modules', "angular", 'dist', 'browser', 'out', 'build'
 }
+
 class CodebaseParser:
     def __init__(self, root_dir):
         self.root_dir = root_dir
@@ -23,7 +21,6 @@ class CodebaseParser:
         """Extracts standalone comments (# or //) and tracking line numbers."""
         comments = []
         is_js_ts = file_path.endswith(('.js', '.ts', '.jsx', '.tsx'))
-        
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
@@ -33,7 +30,6 @@ class CodebaseParser:
 
         for line_idx, line in enumerate(lines, 1):
             clean_line = line.strip()
-            # FIX 4: Support both Python and JavaScript comment tokens
             if not is_js_ts and clean_line.startswith('#'):
                 comments.append({
                     "text": clean_line.lstrip('# ').strip(),
@@ -50,17 +46,12 @@ class CodebaseParser:
 
     def parse_file(self, file_path: str) -> dict:
         """Dissects a file into structural nodes and documentation."""
-        # 1. Calculate relative path natively
         raw_relative_path = os.path.relpath(file_path, self.root_dir)
-        
-        # Explicitly force universal forward slashes immediately!
         relative_path = raw_relative_path.replace("\\", "/")
-        
-        # CRITICAL UNIFICATION FIX: Strip leading 'src/' if present to normalize paths
         if relative_path.startswith("src/"):
             relative_path = relative_path[4:]
 
-        # Handle JavaScript / TypeScript completely separate from Python AST
+        # --- Handle JavaScript / TypeScript Files ---
         if file_path.endswith(('.js', '.ts', '.jsx', '.tsx')):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -68,9 +59,35 @@ class CodebaseParser:
             except UnicodeDecodeError:
                 with open(file_path, 'r', encoding='cp1252', errors='replace') as f:
                     source_code = f.read()
-            
+
             file_hash = self.calculate_hash(source_code)
-            agent_script = os.path.join(self.root_dir, "frontend", "src", "agents", "jsparser.js")
+            
+            # DYNAMIC RESOLUTION FIX: Locate the file paths dynamically relative to this script
+            current_script_dir = os.path.dirname(os.path.abspath(__file__)) # .../src/agentic/codebase_guru/tools/
+            repo_base = os.path.abspath(os.path.join(current_script_dir, "..", "..", "..", "..")) # Navigate up to D:\VaincreLeMonde
+            
+            # Search alternative paths if the primary layout maps wrong
+            possible_paths = [
+                os.path.join(repo_base, "frontend", "src", "agents", "jsparser.js"),
+                os.path.join(self.root_dir, "frontend", "src", "agents", "jsparser.js"),
+                os.path.abspath(os.path.join(current_script_dir, "jsparser.js")) # local script fallback anchor
+            ]
+            
+            agent_script = possible_paths[0]
+            for p in possible_paths:
+                if os.path.exists(p):
+                    agent_script = p
+                    break
+
+            if not os.path.exists(agent_script):
+                print(f"⚠️ JS Parser engine script asset missing on disk surface. Skipping full AST layout for: {relative_path}")
+                return {
+                    "file_path": relative_path,
+                    "file_hash": file_hash,
+                    "classes": [], "functions": [],
+                    "comments": self.extract_comments_manually(file_path)
+                }
+
             result = subprocess.run(
                 ['node', agent_script, file_path], capture_output=True, text=True
             )
@@ -85,17 +102,17 @@ class CodebaseParser:
                     print(f"❌ Failed to decode JS Agent response for {relative_path}")
                     return {"file_path": relative_path, "error": "Invalid JSON from JS agent"}
             else:
-                print(f"JS Agent Runtime Error: {result.stderr}")
-                return {"file_path": relative_path, "error": "JS Agent failed"}
+                print(f"JS Agent Runtime Error for {relative_path}: {result.stderr.strip()}")
+                return {"file_path": relative_path, "error": f"JS Agent runtime exception: {result.stderr.strip()}"}
 
-        # --- Python Processing Flow ---
+        # --- Python Processing Flow Flow ---
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 source_code = f.read()
         except UnicodeDecodeError:
             with open(file_path, 'r', encoding='cp1252', errors='replace') as f:
                 source_code = f.read()
-                
+
         file_hash = self.calculate_hash(source_code)
         file_data = {
             "file_path": relative_path,
@@ -134,7 +151,6 @@ class CodebaseParser:
         return file_data
 
     def scan_codebase(self) -> list:
-        """Walks the directory tree looking for python and frontend files."""
         parsed_codebase = []
         for root, dirs, files in os.walk(self.root_dir):
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
@@ -145,7 +161,6 @@ class CodebaseParser:
                     full_path = os.path.join(root, file)
                     parsed_codebase.append(self.parse_file(full_path))
         return parsed_codebase
-
 
 if __name__ == "__main__":
     parser = CodebaseParser(root_dir=".")
