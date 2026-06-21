@@ -1,6 +1,14 @@
 # src/agentic/codebase_guru/agents/meta_prompter.py
 import os
+import requests
 from .utils import get_git_root
+from falkordb import FalkorDB
+from .prompts_manifest import (
+    PART_DRIVER_TEMPLATE,
+    MIDDLE_CHUNK_TEMPLATE,
+    FINAL_CHUNK_TEMPLATE,
+    ESCALATION_PROMPT_TEMPLATE
+)
 
 class AdvancedMetaPrompter:
     def __init__(self):
@@ -11,6 +19,44 @@ class AdvancedMetaPrompter:
             '.vs', '.angular', '.vscode', 'node_modules', "angular", 
             'dist', 'browser', 'out', 'build', '__pycache__'
         }
+
+    def _query_ingested_textbook_rules(self, target_area: str, improvement_goal: str, limit: int = 3) -> str:
+        """
+        Queries pre-existing nodes built by loader.py. Handles multi-lingual semantic vectors
+        and extracts rules directly from the book markdown content to guide prompt building.
+        """
+        search_phrase = f"{target_area} {improvement_goal}"
+        try:
+            # Generate a 1024D vector to perfectly align with loader.py's bge-m3 mapping specs
+            res = requests.post("http://localhost:11434/api/embeddings", json={"model": "bge-m3", "prompt": search_phrase}, timeout=10)
+            vector = res.json()["embeddings"] if res.status_code == 200 else None
+        except Exception:
+            vector = None
+
+        if not vector:
+            return "## [PEDAGOGICAL CORE MANDATE]\nLimit outputs strictly to meta-prompts. Prohibit direct functional updates."
+
+        # openCypher Query: Locate chunks whose parent document path originates within the books tree
+        query = """
+        CALL db.idx.vector.queryNodes('Chunk', 'embedding', $limit, vecf32($vector)) YIELD node, score
+        MATCH (node)-[:FROM_DOCUMENT]->(d:Document)
+        WHERE d.path CONTAINS 'books/Understanding_This/'
+        RETURN d.path AS chapter, node.text AS rule_text, score
+        """
+        
+        extracted_rules = []
+        try:
+            results = self.doc_graph.query(query, {"limit": limit, "vector": vector})
+            for row in results.result_set:
+                chapter_path = row[0]
+                rule_text = row[1]
+                match_score = float(row[2])
+                extracted_rules.append(f"📘 [INGESTED CURRICULUM RULE: {chapter_path} (Proximity Score: {match_score:.4f})]\n{rule_text}")
+        except Exception as e:
+            return f"// Error extracting multi-lingual book content from graph space: {e}"
+
+        return "\n\n".join(extracted_rules) if extracted_rules else "No matching curriculum guardrails extracted from database text layers."
+
 
     def _analyze_tutor_infrastructure(self) -> dict:
         """Scans the repository using an exclusion list strategy to discover all files."""
@@ -104,27 +150,16 @@ class AdvancedMetaPrompter:
 
         for rel_p, contents in compiled_drivers:
             # CRITICAL SAFETY UNIFICATION: Injected the core preservation constraints into baseline drivers
-            part_driver = f"""### 🎓 SYSTEM INSTRUCTION (PART {chunk_counter} OF MULTI-PART CONTEXT)
-You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. 
-DO NOT generate code yet. Acknowledge receipt of Part {chunk_counter} and wait for the remaining payload.
----
-### 📊 ENVIRONMENT PROFILE
-* Target Area: `{target_area}`
-* Total Files: {stats['total_files']} ({stats['python_files']} Python, {stats['typescript_files']} TypeScript)
----
-### 🎯 INTEGRATION OBJECTIVE
-> {improvement_goal}
----
-### ⚡ CRITICAL CODE PRESERVATION CONSTRAINT (IMMUTABLE ANCHORS)
-- Every single piece of pre-existing functionality inside this system (including multi-lingual tracking, language_tutor pipelines, and legacy database tools) must be preserved.
-- When generating fixes or additions, write your updates on top of the original baseline. Do NOT clear, strip, or replace adjacent system branches out of files.
----
-### 🔌 BACKEND SHARED DRIVERS (BATCH)
-#### 📂 Driver: `{rel_p}`
-```python
-{contents}
-```
-"""
+            part_driver = PART_DRIVER_TEMPLATE.format(
+                chunk_counter=chunk_counter,
+                target_area=target_area,
+                total_files=stats['total_files'],
+                python_files=stats['python_files'],
+                typescript_files=stats['typescript_files'],
+                textbook_context_rules=textbook_context_rules,
+                rel_p=rel_p,
+                contents=contents
+            )
             chunks.append(part_driver)
             chunk_counter += 1
 
@@ -135,14 +170,10 @@ DO NOT generate code yet. Acknowledge receipt of Part {chunk_counter} and wait f
             file_block = f"### 📄 TARGET AREA SOURCE: `{rel_p}`\n```text\n{contents}\n```\n\n"
             if len(current_chunk_text) + len(file_block) > MAX_CHUNK_CHARS and current_chunk_text.strip():
                 # CRITICAL SAFETY UNIFICATION: Injected constraints into target file payload headers
-                chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter})
-Here is the next batch of active source files from our target development area. 
-Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
-
-[PRESERVATION MANDATE]: Retain all original functional modules and logic blocks in this payload chunk.
----
-{current_chunk_text}
-"""
+                chunk_payload = MIDDLE_CHUNK_TEMPLATE.format(
+                    chunk_counter=chunk_counter,
+                    current_chunk_text=current_chunk_text
+                )
                 chunks.append(chunk_payload)
                 chunk_counter += 1
                 current_chunk_text = file_block
@@ -150,13 +181,10 @@ Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
                 current_chunk_text += file_block
 
         if current_chunk_text.strip():
-            chunk_payload = f"""### 📦 REPOSITORY CONTEXT (PART {chunk_counter} - FINAL)
-Here is the final batch of target area files. Please process the system context and generate the required deliverables.
-
-[CRITICAL REMINDER]: Review all preceding multi-part payload contexts. Integrate the final solution with your immutable anchors. Do NOT omit or drop adjacent tool definitions from your output code blocks.
----
-{current_chunk_text}
-"""
+            chunk_payload = FINAL_CHUNK_TEMPLATE.format(
+                chunk_counter=chunk_counter,
+                current_chunk_text=current_chunk_text
+            )
             chunks.append(chunk_payload)
 
         return chunks
@@ -171,37 +199,13 @@ Here is the final batch of target area files. Please process the system context 
 
     def generate_escalation_prompt(self, failed_task: str, loop_history: str, graph_context: str) -> str:
         repo_stats = self._analyze_tutor_infrastructure()
-        return f"""### SYSTEM INSTRUCTION
-You are an Elite AI Software Architect specializing in mixed-language system integration (Python and TypeScript).
-A local code-exploration agent running a 14B model encountered a reasoning trap or context ceiling.
-Your goal is to inspect the execution logs, resolve code discrepancies, and provide a definitive architectural resolution.
----
-### 📊 REPOSITORY PROFILE
-* **Total Tracked Files**: {repo_stats['total_files']} ({repo_stats['python_files']} Python, {repo_stats['typescript_files']} TypeScript)
----
-### 🎯 MISSION OBJECTIVE
-> {failed_task}
----
-### 🕵️ LOCAL AGENT EXECUTION LOGS
-```text
-{loop_history}
-```
----
-### 🗺️ FALKORDB EXTRACTED GRAPH CONTEXT
-```text
-{graph_context}
-```
----
-### 📥 EXPECTED ARCHITECTURAL RESPONSE FORMAT
-1. **Root Cause Diagnosis**: Detail why the local model failed or where the code paths diverge.
-2. **Refactored Code Blueprints**: Provide production-ready, clean, and typed implementations.
-
-3. **CRITICAL CODE PRESERVATION CONSTRAINT**:
-   - DO NOT remove or "gut" pre-existing adjacent systems, tools, or functionalities (e.g., if adding a new feature to tutor_engine.py, ensure all language tutor routing, SQL readers, and dual escalation agents remain intact).
-   - Integrate new features incrementally on top of the existing baseline rather than wiping and starting fresh.
-   - Every existing functional path is considered an immutable anchor unless explicitly told otherwise.
-
-4. **FalkorDB openCypher Adjustments**: Provide the exact openCypher updates casting multi-dimensional vector arrays natively using vecf32($vector) to patch fingerprints and documentation history layers cleanly.
-"""
-
-
+        textbook_context_rules = self._query_ingested_textbook_rules(failed_task, "")
+        return ESCALATION_PROMPT_TEMPLATE.format(
+            total_files=repo_stats["total_files"],
+            python_files=repo_stats["python_files"],
+            typescript_files=repo_stats["typescript_files"],
+            textbook_context_rules=textbook_context_rules,
+            failed_task=failed_task,
+            loop_history=loop_history,
+            graph_context=graph_context
+        )

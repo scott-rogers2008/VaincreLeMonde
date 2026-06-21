@@ -21,13 +21,25 @@ class UniversalGoalManager:
         self.graph = self.db.select_graph("universal_life_matrix")
 
     def initialize_matrix_schema(self):
-        """Seeds the 8 fundamental Pillar nodes of human architecture into FalkorDB."""
+        """
+        Seeds the 8 fundamental Pillar nodes into FalkorDB ONLY if the 
+        graph schema is empty, preventing redundant database writes on boot.
+        """
+        # 1. Run a quick count query to check schema existence natively
+        check_query = "MATCH (p:Pillar) RETURN count(p) AS count"
+        try:
+            res = self.graph.query(check_query)
+            if res.result_set and int(res.result_set[0][0]) == len(self.PILLARS):
+                # The schema is already fully populated; drop execution immediately
+                return
+        except Exception:
+            pass
+
+        # 2. Fallback execution: Only run if the container instance was restarted or wiped
         for pillar_key, desc in self.PILLARS.items():
             query = """
             MERGE (p:Pillar {id: $id})
-            SET p.name = $name,
-                p.description = $desc,
-                p.initialized_at = $today
+            SET p.name = $name, p.description = $desc, p.initialized_at = $today
             """
             try:
                 self.graph.query(query, {
@@ -38,8 +50,9 @@ class UniversalGoalManager:
                 })
             except Exception as e:
                 print(f"❌ Failed to seed Life Matrix Pillar [{pillar_key}]: {e}")
+        
         print("✨ Universal 8-Pillar Life Matrix Schema successfully mapped in FalkorDB.")
-
+        
     def add_universal_goal(self, goal_id: str, pillar: str, description: str, target_metric: str) -> str:
         """Registers a goal (e.g., coding speed, clean eating, or portfolio targets) to a Pillar."""
         clean_pillar = pillar.upper().strip()
@@ -114,3 +127,52 @@ class UniversalGoalManager:
         except Exception as e:
             report["error"] = str(e)
         return report
+
+    def register_structured_plan(self, plan_id: str, pillar: str, description: str, steps: list[dict]) -> str:
+        """Creates a parent planning node and links sequential milestones atomically."""
+        # 1. Register the master parent plan node using your original base method
+        self.add_universal_goal(plan_id, pillar, description, "Completion of all nested step milestones.")
+        
+        # 2. Wire child nodes and sequence them inside the graph
+        for idx, step in enumerate(steps):
+            step_id = f"{plan_id}_step_{idx}"
+            query = """
+            MATCH (parent:Goal {id: $parent_id})
+            MERGE (child:Goal {id: $child_id})
+            SET child.description = $desc, child.status = 'ACTIVE', child.step_order = $order, child.type = 'PLAN_STEP'
+            MERGE (parent)-[r:HAS_STEP]->(child)
+            SET r.sequence = $order
+            """
+            self.graph.query(query, {
+                "parent_id": plan_id.lower(),
+                "child_id": step_id,
+                "desc": step.get("description"),
+                "order": idx
+            })
+        return f"✅ Structured learning plan [{plan_id}] initialized with {len(steps)} tracking milestones."
+
+    def fetch_active_plan_tree_context(self, parent_plan_id: str) -> str:
+        """Extracts the entire timeline checklist of a plan to analyze current progress."""
+        query = """
+        MATCH (p:Goal {id: $pid})-[:HAS_STEP]->(c:Goal)
+        OPTIONAL MATCH (c)-[:RECORDED_PERFORMANCE]->(e:PerformanceRecord)
+        RETURN c.step_order AS order, c.id AS id, c.description AS desc, c.status AS status, avg(e.score) AS avg_score
+        ORDER BY c.step_order ASC
+        """
+        lines = []
+        try:
+            res = self.graph.query(query, {"pid": parent_plan_id.lower()})
+            if res.result_set:
+                lines.append(f"\n📋 PLAN CHECKLIST TIMELINE FOR [{parent_plan_id.upper()}]:")
+                for row in res.result_set:
+                    order = row[0]
+                    step_id = row[1]
+                    desc = row[2]
+                    status = row[3]
+                    score = f"(Score: {float(row[4]):.2f})" if row[4] is not None else "(PENDING)"
+                    marker = "✅" if status == "COMPLETE" else "⏳"
+                    lines.append(f"   {order}. {marker} [{step_id}] - {desc} {score}")
+        except Exception as e:
+            return f"Error tracing plan nodes: {e}"
+        return "\n".join(lines) if lines else ""
+        

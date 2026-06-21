@@ -100,7 +100,7 @@ class MDFileChangeHandler:
                     print(f"  ⏭️ Skipping unchanged file: '{db_rel_path}'")
                     continue
                     
-                print(f"  🔄 Changes detected. Indexing document via multi-lingual model...")
+                print(f"  🔄 Changes detected for file: '{db_rel_path}'. Indexing document via multi-lingual model...")
                 self.purge_document_cascade(db_rel_path)
                 
                 # Pass clean ISO string properties to track modification states precisely
