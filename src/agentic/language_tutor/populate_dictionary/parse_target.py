@@ -4,31 +4,23 @@ import gzip
 import json
 import re
 from config import POS_MAP
-from db import get_db_connection, execute_dictionary_insert
+from db import get_db_connection, execute_dictionary_insert, get_language_id
 from embeddings import get_ollama_embedding, verify_ollama_status
-
-LANG_MAP = {
-    "ENG-ZZ-M": "English",
-    "KOR-ZZ-M": "Korean",
-    "DEU-ZZ-M": "German",
-    "FRA-ZZ-M": "French",
-    "SPA-ZZ-M": "Spanish"
-}
 
 # UNIVERSAL DEFENSE: Map your DB language keys strictly to Kaikki's standard country ISO codes
 KAIKKI_CODES = {
-    "KOR-ZZ-M": "ko",
-    "SPA-ZZ-M": "es",
-    "FRA-ZZ-M": "fr",
-    "DEU-ZZ-M": "de"
+    "Korean": "ko",
+    "Spanish": "es",
+    "French": "fr",
+    "German": "de"
 }
 
 # HARDENED TARGET CODES: Matches valid scripts while ignoring foreign leakage
 SCRIPT_VALIDATORS = {
-    "KOR-ZZ-M": re.compile(r'[\uac00-\ud7a3]'),
-    "SPA-ZZ-M": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$'),
-    "FRA-ZZ-M": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$'),
-    "DEU-ZZ-M": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$')
+    "Korean": re.compile(r'[\uac00-\ud7a3]'),
+    "Spanish": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$'),
+    "French": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$'),
+    "German": re.compile(r'^[^' + r'\u4e00-\u9fff\u3040-\u30ff\u0400-\u04ff' + r']+$')
 }
 
 def extract_enriched_definition(sense):
@@ -64,28 +56,28 @@ def extract_enriched_definition(sense):
         
     return enriched_def
 
-def is_word_valid_for_language(word_name: str, language_id: str) -> bool:
+def is_word_valid_for_language(word_name: str, language: str) -> bool:
     """Strictly enforces language-specific script boundaries to prevent data cross-contamination."""
     if not word_name:
         return False
-    validator = SCRIPT_VALIDATORS.get(language_id)
+    validator = SCRIPT_VALIDATORS.get(language)
     if not validator:
         return True
-    if language_id == "KOR-ZZ-M":
+    if language == "Korean":
         return bool(validator.search(word_name))
     else:
         return bool(validator.match(word_name))
 
-def process_target_language(filepath, language_id):
+def process_target_language(filepath, language):
     if not verify_ollama_status():
         print("❌ Ollama node is offline. Aborting ingestion loop.")
         return
         
-    if language_id not in KAIKKI_CODES:
-        print(f"❌ Unknown language ID: {language_id}")
+    if language not in KAIKKI_CODES:
+        print(f"❌ Unknown language: {language}")
         return
 
-    print(f"🚀 Ingesting {LANG_MAP[language_id]} entries and native embeddings from: {filepath}...")
+    print(f"🚀 Ingesting {language} entries and native embeddings from: {filepath}...")
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -98,17 +90,21 @@ def process_target_language(filepath, language_id):
     foreign_leakage_count = 0
     outdated_archaich_count = 0
     regional_count = 0
+    raw_word_count = 0
 
     with gzip.open(filepath, 'rt', encoding='utf-8') as f:
         for line in f:
             if not line.strip():
                 continue
                 
+            raw_word_count += 1
+            if raw_word_count % 1000 == 0:
+                print(f" -> Processed {raw_word_count} raw lines for {language}...")
             data = json.loads(line)
             
             # STEP 1: BULK FILTER VIA ISO CODES (Bypasses any script string translations)
             line_lang_code = data.get("lang_code", "").strip().lower()
-            if line_lang_code != KAIKKI_CODES[language_id]:
+            if line_lang_code != KAIKKI_CODES[language]:
                 foreign_leakage_count += 1
                 continue
 
@@ -117,7 +113,7 @@ def process_target_language(filepath, language_id):
             pos_id = POS_MAP.get(pos_raw, 14)
             
             # STEP 2: SCRIPT BOUNDARY ENFORCEMENT
-            if not is_word_valid_for_language(word_name, language_id):
+            if not is_word_valid_for_language(word_name, language):
                 script_rejected_count += 1
                 continue
 
@@ -188,6 +184,8 @@ def process_target_language(filepath, language_id):
                     continue
 
                 clean_word = word_name.lower().strip()
+
+                language_id = get_language_id(language)
                 
                 # RESTART CHECK
                 cursor.execute("""
@@ -207,7 +205,7 @@ def process_target_language(filepath, language_id):
                 
                 dictionary_batch.append((
                     language_id, pos_id, None, word_name, definition, lang_vector, 
-                    None, None, metadata_json, None, is_mwe, clean_word, None
+                    None, None, metadata_json, is_mwe, clean_word, 
                 ))
                 processed_count += 1
                 
@@ -215,7 +213,7 @@ def process_target_language(filepath, language_id):
                     execute_dictionary_insert(cursor, dictionary_batch)
                     dictionary_batch = []
                     conn.commit()
-                    print(f" -> Stored {processed_count} rows for {LANG_MAP[language_id]}...")
+                    print(f" -> Stored {processed_count} rows for {language}...")
 
         if dictionary_batch:
             execute_dictionary_insert(cursor, dictionary_batch)
@@ -224,7 +222,7 @@ def process_target_language(filepath, language_id):
     cursor.close()
     conn.close()
     
-    print(f"🎉 Completed {LANG_MAP[language_id]} Ingestion!")
+    print(f"🎉 Completed {language} Ingestion!")
     print(f" - Added rows: {processed_count}")
     print(f" - Skipped (Duplicates): {skipped_count}")
     print(f" - Blocked (Foreign Language Leakage): {foreign_leakage_count}")
@@ -234,7 +232,7 @@ def process_target_language(filepath, language_id):
     print(f" - Rejected (Low-quality definitions): {low_quality_count}\n")
 
 if __name__ == "__main__":
-#    process_target_language("ko-extract.jsonl.gz", "KOR-ZZ-M")
-    process_target_language("es-extract.jsonl.gz", "SPA-ZZ-M")
-#    process_target_language("fr-extract.jsonl.gz", "FRA-ZZ-M")
-#    process_target_language("de-extract.jsonl.gz", "DEU-ZZ-M")
+    process_target_language("ko-extract.jsonl.gz", "Korean")
+    process_target_language("es-extract.jsonl.gz", "Spanish")
+    process_target_language("fr-extract.jsonl.gz", "French")
+    process_target_language("de-extract.jsonl.gz", "German")

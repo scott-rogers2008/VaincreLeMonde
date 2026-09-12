@@ -84,3 +84,4 @@ if __name__ == "__main__":
             if user_prompt.lower() in ["quit", "exit"]: break
             if user_prompt: print(f"\n✨ [TutorBot Result]:\n{bot.execute_turn(user_prompt, history)}\n")
         except KeyboardInterrupt: break
+    print("👋 Goodbye!")

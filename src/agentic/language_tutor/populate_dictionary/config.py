@@ -29,6 +29,7 @@ POS_MAP = {
     
     # 2 | PROPN | Proper Noun
     "name": 2,        # First names, surnames, place names
+    "proper": 2,
     
     # 3 | VERB | Verb
     "verb": 3,
