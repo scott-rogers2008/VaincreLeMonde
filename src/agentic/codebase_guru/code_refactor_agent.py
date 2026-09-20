@@ -135,7 +135,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         prompter.export_prompt_to_file(escalated_prompt, filename="escalated_prompt.md")
 
 if __name__ == "__main__":
-    goal = os.environ.get("INTEGRATION_GOAL", "Review suite and unify codebase.")
+    goal = os.environ.get("INTEGRATION_GOAL", "languagetool integration to expand tutor functionality.")
     area = os.environ.get("AREA_TO_IMPROVE", "agentic")
     out = run_agent_loop(user_objective=goal, target_area=area)
     print(out)

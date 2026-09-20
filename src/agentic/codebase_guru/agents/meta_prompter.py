@@ -1,5 +1,6 @@
 # src/agentic/codebase_guru/agents/meta_prompter.py
 import os
+import shutil
 import requests
 from .utils import get_git_root
 from falkordb import FalkorDB
@@ -150,6 +151,7 @@ class AdvancedMetaPrompter:
 
         for rel_p, contents in compiled_drivers:
             # CRITICAL SAFETY UNIFICATION: Injected the core preservation constraints into baseline drivers
+            textbook_context_rules = self._query_ingested_textbook_rules(contents, "")
             part_driver = PART_DRIVER_TEMPLATE.format(
                 chunk_counter=chunk_counter,
                 target_area=target_area,
@@ -190,9 +192,15 @@ class AdvancedMetaPrompter:
         return chunks
 
     def export_prompt_to_file(self, prompt_chunks: list, filename_base="refactor_blueprint"):
+        refactor_path = os.path.join(self.git_root, "refactor_prompts")
+        
+        if os.path.exists(refactor_path):
+            shutil.rmtree(refactor_path)
+        os.makedirs(refactor_path, exist_ok=True)
+
         for idx, chunk in enumerate(prompt_chunks, 1):
             filename = f"{filename_base}_part{idx}.md"
-            output_path = os.path.join(self.git_root, filename)
+            output_path = os.path.join(refactor_path, filename)
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(chunk)
             print(f"📁 Exported: {filename}")
