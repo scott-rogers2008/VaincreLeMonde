@@ -162,4 +162,5 @@ ENV/
 # mypy
 .mypy_cache/
 .aider*
-refactor_b*
+refactor_prompts/
+study_prompts/

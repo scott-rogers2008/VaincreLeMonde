@@ -9,7 +9,7 @@ from .utils import get_git_root
 
 EMBED_MODEL = "bge-m3"
 OLLAMA_EMBED_URL = "http://localhost:11434/api/embeddings"
-os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs', '.vscode', 'node_modules', 'src'}
+os_walk_exclude = {'.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs', '.vscode', 'node_modules', 'src', "study_prompts", "refactor_prompts"}
 
 class MDFileChangeHandler:
     def __init__(self):
@@ -52,11 +52,11 @@ class MDFileChangeHandler:
         self.graph.query(query, {"doc_path": relative_path})
 
     def sync_all(self):
-        """Discovers and parses markdown files using active delta hashing loops."""
+        """Discovers markdown files, syncs deltas, and prunes orphaned graph nodes."""
         base_dir = get_git_root(os.curdir)
         self.initialize_graph_environment()
         
-        # Pull active graph hashes into memory to skip unchanged scripts
+        # 1. Pull active graph hashes into memory
         db_hashes = {}
         try:
             res = self.graph.query("MATCH (d:Document) RETURN d.path AS path, d.hash AS hash")
@@ -65,7 +65,11 @@ class MDFileChangeHandler:
         except Exception:
             pass
 
+        # Track every valid relative path found on disk during this scan pass
+        discovered_disk_paths = set()
+
         for root, dirs, files in os.walk(base_dir, topdown=True):
+            # Your current hardened exclusion filter works perfectly here
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
             
             # Map structural directories via openCypher
@@ -88,6 +92,9 @@ class MDFileChangeHandler:
                 db_rel_path = os.path.relpath(full_md_path, base_dir).replace("\\", "/")
                 db_parent_dir = os.path.relpath(root, base_dir).replace("\\", "/")
                 
+                # Register that this file officially exists on disk
+                discovered_disk_paths.add(db_rel_path)
+
                 try:
                     with open(full_md_path, 'r', encoding='utf-8') as f: 
                         document_text = f.read()
@@ -103,7 +110,6 @@ class MDFileChangeHandler:
                 print(f"  🔄 Changes detected for file: '{db_rel_path}'. Indexing document via multi-lingual model...")
                 self.purge_document_cascade(db_rel_path)
                 
-                # Pass clean ISO string properties to track modification states precisely
                 iso_today = date.today().isoformat()
                 doc_query = """
                     MATCH (dir:Directory {path: $parent_path})
@@ -119,13 +125,11 @@ class MDFileChangeHandler:
                     "file_hash": live_file_hash, "today": iso_today, "source": "local_workspace_import"
                 })
 
-                # Chunk and embed paragraphs using the multi-lingual sliding window configuration
                 chunks = self.chunker.chunk_text(text=document_text)
                 for seq, chunk_body in enumerate(chunks):
                     chunk_uuid = f"{db_rel_path}:chunk_{seq}"
                     bge_vector = self._get_bge_embedding(chunk_body)
                     
-                    # FIXED: Wrapped raw float list in vecf32() inside openCypher call
                     chunk_query = """
                         MATCH (d:Document {path: $doc_path})
                         CREATE (c:Chunk {
@@ -141,7 +145,22 @@ class MDFileChangeHandler:
                         "chunk_uuid": chunk_uuid, "vector": bge_vector
                     })
                 print(f"  └── Ingestion complete. Created {len(chunks)} multi-lingual search chunks.")
+
+        # ---------------------------------------------------------------------
+        # 🔄 DYNAMIC RECONCILIATION PURGE LOOP
+        # ---------------------------------------------------------------------
+        # Identify documents in the DB that were completely missed by the disk scan
+        orphaned_db_paths = set(db_hashes.keys()) - discovered_disk_paths
+
+        if orphaned_db_paths:
+            print(f"\n🧹 Found {len(orphaned_db_paths)} document nodes in graph missing from disk surface. Starting prune...")
+            for orphan_path in orphaned_db_paths:
+                print(f"  ├── 🗑️ Purging orphaned graph document cascade: '{orphan_path}'")
+                self.purge_document_cascade(orphan_path)
+            print("✅ Graph database surfaces are perfectly reconciled with current disk state.")
+
         print("✨ Document Knowledge Graph successfully synchronized with FalkorDB!")
+
 
 if __name__ == "__main__":
     md_handler = MDFileChangeHandler()

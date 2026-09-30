@@ -73,7 +73,7 @@ class DocumentConceptAgent:
         [TARGET POSTULATE CONCEPT]
         "{target_postulate}"
 
-        Determine if this chunk倾向于 ILLUSTRATES, CORROBORATES, or CHALLENGES the postulate.
+        Determine if this chunk ILLUSTRATES, CORROBORATES, or CHALLENGES the postulate.
         Assign a confidence weight score between 0.0 and 1.0.
 
         Output exactly ONE JSON block matching this layout structure:

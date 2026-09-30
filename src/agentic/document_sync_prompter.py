@@ -2,12 +2,15 @@
 import os
 import sys
 import shutil
+import re
+import json
 from falkordb import FalkorDB
-from loader import MDFileChangeHandler
-from utils import get_git_root
+from .loader import MDFileChangeHandler
+from .utils import get_git_root
+from .language_tutor.tools.embeddings import get_embeddings as get_multilingual_embedding
 
 # Pull structural chunk templates cleanly from your prompt manifest layers
-from codebase_guru.agents.prompts_manifest import (
+from .codebase_guru.agents.prompts_manifest import (
     PART_DRIVER_TEMPLATE,
     MIDDLE_CHUNK_TEMPLATE,
     FINAL_CHUNK_TEMPLATE
@@ -17,8 +20,9 @@ class DocumentSyncPrompter:
     def __init__(self):
         self.git_root = os.path.abspath(get_git_root(os.curdir))
         self.db = FalkorDB(host='localhost', port=6379)
-        # Interface natively with your isolated 1024D Document Graph space
-        self.graph = self.db.select_graph("document_rag_graph")
+        # Native hooks into both isolated graph storage containers
+        self.doc_graph = self.db.select_graph("document_rag_graph")
+        self.code_graph = self.db.select_graph("codebase_guru")
         self.sync_engine = MDFileChangeHandler()
 
     def sync_workspace_documents(self):
@@ -27,85 +31,110 @@ class DocumentSyncPrompter:
         self.sync_engine.sync_all()
         print("✅ FalkorDB document graph is fully synchronized with local disk states.")
 
-    def harvest_document_context_tree(self, target_rel_path: str) -> str:
+    def figure_out_required_files(self, prompt_objective: str) -> list:
         """
-        Queries FalkorDB to pull the target file text chunks verbatim, 
-        then automatically traverses [:REFERENCES] edges to capture linked files.
+        AI Document Context Gathering Step: Uses multi-lingual vector embeddings 
+        to scan the document graph database, dynamically establishing which markdown 
+        or text file paths are conceptually relevant to the prompt.
         """
-        # Normalize incoming cross-OS path slashes
-        clean_target_path = target_rel_path.replace("\\", "/")
-        print(f"📡 [Step 2] Querying graph node context trees for focus document: '{clean_target_path}'")
-
-        # 1. Fetch primary document text chunks ordered by layout sequence
-        primary_query = """
-            MATCH (d:Document {path: \$doc_path})
-            OPTIONAL MATCH (c:Chunk)-[:FROM_DOCUMENT]->(d)
-            RETURN c.text AS chunk_text
-            ORDER BY c.chunk_order ASC
-        """
+        print(f"🧠 [Step 2] Analyzing objective vector semantics to gather document dependencies...")
+        discovered_paths = set()
         
+        # 1. Compute BGE-M3 embedding values for the loose prompt text
+        vector_data = get_multilingual_embedding(prompt_objective)
+        sanitized_vector = [float(x) for x in vector_data] if vector_data else None
+
+        # 2. Query Text Graph for relevant markdown documentation paths ONLY
+        if sanitized_vector:
+            doc_query = """
+                CALL db.idx.vector.queryNodes('Chunk', 'embedding', 5, vecf32($vector))
+                YIELD node, score
+                MATCH (node)-[:FROM_DOCUMENT]->(d:Document)
+                RETURN d.path AS path, score
+            """
+            try:
+                res = self.doc_graph.query(doc_query, {"vector": sanitized_vector})
+                if res.result_set:
+                    for row in res.result_set:
+                        if row and row[0]: 
+                            # FIXED: Removed the > 0.65 gate completely to capture matches safely
+                            discovered_paths.add(str(row[0]).strip('"'))
+            except Exception as e:
+                print(f"⚠️ Document graph discovery query skipped: {e}")
+
+        # ---------------------------------------------------------------------
+        # 📂 AUTOMATIC DISK SURFACE FALLBACK: Avoid empty manifest outputs
+        # ---------------------------------------------------------------------
+        if not discovered_paths:
+            print("⚠️ Vector lookup yielded zero nodes. Scanning physical 'references/' tree for fallback documentation...")
+            ref_dir = os.path.join(self.git_root, "references")
+            if os.path.exists(ref_dir):
+                for root, _, files in os.walk(ref_dir):
+                    for file in files:
+                        if file.endswith('.md') and not file.startswith('dynamic_task_objective'):
+                            rel_p = os.path.relpath(os.path.join(root, file), self.git_root).replace("\\", "/")
+                            discovered_paths.add(rel_p)
+
+        final_file_targets = list(discovered_paths)
+        print(f"🎯 Context Gathering Complete! Selected {len(final_file_targets)} document files to unpack:")
+        for path in final_file_targets:
+            print(f"  ├── Selected Document Target: '{path}'")
+        return final_file_targets
+
+    def harvest_explicit_context_tree(self, file_paths: list) -> str:
+        """Verbatim data harvesting loop reading content blocks cleanly from active paths."""
         compiled_text_blocks = []
-        try:
-            res = self.graph.query(primary_query, {"doc_path": clean_target_path})
-            if res.result_set:
-                compiled_text_blocks.append(f"### 📄 MAIN FOCUS DOCUMENT: `src/{clean_target_path}`\n")
-                for row in res.result_set:
-                    if row[0]:
-                        compiled_text_blocks.append(str(row[0]))
-        except Exception as e:
-            print(f"⚠️ Error pulling primary document chunks from graph: {e}")
-
-        # 2. Traverse [:REFERENCES] to harvest adjacent file references
-        referenced_query = """
-            MATCH (d:Document {path: \$doc_path})
-            OPTIONAL MATCH (c:Chunk)-[:FROM_DOCUMENT]->(d)
-            MATCH (c)-[:REFERENCES]->(ref:Document)
-            OPTIONAL MATCH (ref_chunk:Chunk)-[:FROM_DOCUMENT]->(ref)
-            RETURN ref.path AS ref_path, ref_chunk.text AS ref_text
-            ORDER BY ref.path ASC, ref_chunk.chunk_order ASC
-        """
         
-        try:
-            ref_res = self.graph.query(referenced_query, {"doc_path": clean_target_path})
-            current_ref_path = None
+        for path in file_paths:
+            # Handle normalized folder structures
+            clean_path = path.replace("src/", "").replace("\\", "/").strip()
             
-            if ref_res.result_set:
-                for row in ref_res.result_set:
-                    ref_path = row[0]
-                    ref_chunk_text = row[1]
-                    
-                    if ref_path and ref_chunk_text:
-                        clean_ref_path = str(ref_path).strip('"')
-                        if clean_ref_path != current_ref_path:
-                            current_ref_path = clean_ref_path
-                            compiled_text_blocks.append(f"\n\n### 🔗 AUTOMATICALLY HARVESTED REFERENCE: `src/{current_ref_path}`\n")
-                        
-                        compiled_text_blocks.append(str(ref_chunk_text))
-        except Exception as e:
-            print(f"⚠️ Error harvesting adjacent reference maps: {e}")
+            # Attemp loading text blocks natively via document_rag_graph mapping layout
+            query = """
+                MATCH (d:Document {path: \$doc_path})
+                OPTIONAL MATCH (c:Chunk)-[:FROM_DOCUMENT]->(d)
+                RETURN c.text AS chunk_text
+                ORDER BY c.chunk_order ASC
+            """
+            try:
+                res = self.doc_graph.query(query, {"doc_path": clean_path})
+                if res.result_set and res.result_set[0][0]:
+                    compiled_text_blocks.append(f"\n\n### 📄 DYNAMICALLY GATHERED SOURCE LAYER: `src/{clean_path}`\n")
+                    for row in res.result_set:
+                        if row[0]:
+                            compiled_text_blocks.append(str(row[0]))
+                    continue
+            except Exception:
+                pass
+
+            # Relational filesystem fallback if individual text tokens aren't indexed as Document vertices yet
+            full_disk_path = os.path.normpath(os.path.join(self.git_root, "src", clean_path))
+            if os.path.exists(full_disk_path):
+                try:
+                    with open(full_disk_path, "r", encoding="utf-8", errors="replace") as f:
+                        compiled_text_blocks.append(f"\n\n### 📄 DYNAMICALLY GATHERED SOURCE LAYER: `src/{clean_path}`\n```text\n{f.read()}\n```\n")
+                except Exception:
+                    pass
 
         return "\n".join(compiled_text_blocks)
 
     def package_and_export_chunks(self, combined_text: str, target_area: str):
-        """Splits full curriculum contexts into safe, 7000-character payload files."""
+        """Splits compiled context streams safely into 7000-character copy-paste bundles."""
         print("📦 [Step 3] Splitting structural context into safe copy-paste bundles...")
         
-        # Pull basic repo metrics to fulfill the manifest contract parameters
-        total_files = 122
-        python_files = 65
+        total_files = 123
+        python_files = 66
         typescript_files = 22
         
-        # Gather textbook curriculum guardrails
         textbook_context_rules = (
             "## [PEDAGOGICAL CORE MANDATE]\n"
-            "Limit outputs strictly to meta-prompts or documentation tasks. Prohibit direct functional changes."
+            "Review dynamically gathered workspace context layers. Limit responses entirely to the stated objective."
         )
 
         chunks = []
         chunk_counter = 1
         MAX_CHUNK_CHARS = 7000
 
-        # Prime the multi-part sequence with your official baseline driver header shape
         part_driver = PART_DRIVER_TEMPLATE.format(
             chunk_counter=chunk_counter,
             target_area=target_area,
@@ -113,13 +142,12 @@ class DocumentSyncPrompter:
             python_files=python_files,
             typescript_files=typescript_files,
             textbook_context_rules=textbook_context_rules,
-            rel_p=f"references/{target_area}",
-            contents="[Active Educational Knowledge Matrix Context Layer]"
+            rel_p=f"references/dynamic_context_tree",
+            contents="[Active Workspace Intent Target Manifest Layer]"
         )
         chunks.append(part_driver)
         chunk_counter += 1
 
-        # Walk through your document text payload stream and partition text windows
         current_chunk_text = ""
         paragraphs = combined_text.split("\n\n")
         
@@ -147,12 +175,10 @@ class DocumentSyncPrompter:
             chunks.append(chunk_payload)
 
         study_path = os.path.join(self.git_root, "study_prompts")
-        
         if os.path.exists(study_path):
             shutil.rmtree(study_path)
         os.makedirs(study_path, exist_ok=True)
 
-        # Write pristine markdown files out to your repository root directory
         for idx, chunk in enumerate(chunks, 1):
             filename = f"study_blueprint_part{idx}.md"
             output_path = os.path.join(study_path, filename)
@@ -164,21 +190,32 @@ class DocumentSyncPrompter:
 
 def main():
     if len(sys.argv) < 2:
-        print("❌ Usage: python document_sync_prompter.py <relative_path_to_markdown_file>")
-        print("👉 Example: python document_sync_prompter.py references/focus_notes.md")
+        print("❌ Usage: python document_sync_prompter.py <text_prompt_objective>")
+        print("👉 Example: python document_sync_prompter.py \"consolidate files\"")
         sys.exit(1)
         
-    target_doc = sys.argv[1]
-    
+    prompt_objective = sys.argv[1]
     prompter = DocumentSyncPrompter()
-    # Step 1: Force delta synchronization check
+    
+    # 1. Force state synchronization checks
     prompter.sync_workspace_documents()
     
-    # Step 2: Read target and follow graph edges to extract content text
-    combined_payload = prompter.harvest_document_context_tree(target_doc)
+    # 2. Context Gathering Agent Stage: AI figures out what files match your query strings
+    target_files = prompter.figure_out_required_files(prompt_objective)
     
-    # Step 3: Bundle everything into sequential safe files
-    prompter.package_and_export_chunks(combined_payload, target_area=target_doc)
+    if not target_files:
+        # Dynamic fallback note generation if vector space returns empty matches
+        target_files = ["references/dynamic_task_objective.md"]
+        full_p = os.path.join(prompter.git_root, target_files[0])
+        os.makedirs(os.path.dirname(full_p), exist_ok=True)
+        with open(full_p, "w", encoding="utf-8") as f:
+            f.write(f"# Workspace Intent\n\nObjective: {prompt_objective}\n")
+
+    # 3. Harvest exact chunks from those identified targets
+    combined_payload = prompter.harvest_explicit_context_tree(target_files)
+    
+    # 4. Generate size-safe bundle packages
+    prompter.package_and_export_chunks(combined_payload, target_area=prompt_objective[:30])
 
 if __name__ == "__main__":
     main()
