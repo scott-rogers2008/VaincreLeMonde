@@ -68,6 +68,7 @@ class MDFileChangeHandler:
         # Track every valid relative path found on disk during this scan pass
         discovered_disk_paths = set()
 
+        self.counter = 0
         for root, dirs, files in os.walk(base_dir, topdown=True):
             # Your current hardened exclusion filter works perfectly here
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
@@ -98,9 +99,11 @@ class MDFileChangeHandler:
                 try:
                     with open(full_md_path, 'r', encoding='utf-8') as f: 
                         document_text = f.read()
+                    self.counter += 1
                 except UnicodeDecodeError:
                     with open(full_md_path, 'r', encoding='cp1252', errors='replace') as f: 
                         document_text = f.read()
+                    self.counter += 1
 
                 live_file_hash = self._calculate_file_hash(document_text)
                 if db_rel_path in db_hashes and db_hashes[db_rel_path] == live_file_hash:
@@ -161,6 +164,13 @@ class MDFileChangeHandler:
 
         print("✨ Document Knowledge Graph successfully synchronized with FalkorDB!")
 
+    def get_number_of_indexed_documents(self) -> int:
+        """Returns the total count of unique documents currently indexed in the graph."""
+        try:
+            res = self.graph.query("MATCH (d:Document) RETURN COUNT(d) AS doc_count")
+            return int(res.result_set[0][0]) if res.result_set else 0
+        except Exception:
+            return 0
 
 if __name__ == "__main__":
     md_handler = MDFileChangeHandler()

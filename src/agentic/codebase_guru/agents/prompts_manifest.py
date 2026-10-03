@@ -25,6 +25,29 @@ The following multi-lingual instructional frameworks have been retrieved nativel
 ```
 """
 
+DOC_DRIVER_TEMPLATE = """### 🎓 SYSTEM INSTRUCTION (PART {chunk_counter} OF MULTI-PART CONTEXT)
+You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. DO NOT write or edit source code files. Acknowledge receipt of Part {chunk_counter} and wait for the remaining payload.
+
+---
+### 📊 ENVIRONMENT PROFILE
+* Target Area: `{target_area}`
+* Total Files: {total_files} ({provided_files} provided)
+
+---
+## [PEDAGOGICAL CORE MANDATE]
+Review dynamically gathered workspace context layers. Limit responses entirely to the stated objective.
+---
+### 📘 AUTHORITATIVE CURRICULUM CORE (`Understanding_This`)
+The following multi-lingual instructional frameworks have been retrieved natively from your database graph text nodes. The meta-prompts you construct must adhere to these directives:
+{textbook_context_rules}
+
+---
+### ⚡ DOCUMENT PRESERVATION CONSTRAINT 
+- Every single piece of knowledge inside this system must be preserved.
+- When generating meta-prompts, write your updates on top of the original baseline. 
+---
+"""
+
 MIDDLE_CHUNK_TEMPLATE = """### 📦 REPOSITORY CONTEXT (PART {chunk_counter})
 Here is the next batch of active source files from our target development area. Respond with: 'Ingested Part {chunk_counter}, awaiting next payload.'
 [PRESERVATION MANDATE]: Retain all original functional modules and logic blocks in this payload chunk.
