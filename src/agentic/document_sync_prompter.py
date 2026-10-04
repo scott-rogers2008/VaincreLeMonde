@@ -95,7 +95,7 @@ class DocumentSyncPrompter:
             clean_path = path.replace("src/", "").replace("\\", "/").strip()
             file_header = f"\n\n### 📄 DYNAMICALLY GATHERED SOURCE LAYER: `src/{clean_path}`\n"
             file_body = ""
-            
+
             if "dynamic_context_tree" in clean_path:
                 continue
             
@@ -159,9 +159,7 @@ class DocumentSyncPrompter:
             target_area=target_area,
             total_files=total_files,
             provided_files=provided_files,
-            textbook_context_rules=textbook_context_rules,
-            rel_p=f"study_prompts/dynamic_context_tree",
-            contents=preview_text
+            textbook_context_rules=textbook_context_rules
         )
         chunks.append(part_driver)
         chunk_counter += 1
