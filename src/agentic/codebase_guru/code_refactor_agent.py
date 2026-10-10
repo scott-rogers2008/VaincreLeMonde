@@ -135,7 +135,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         prompter.export_prompt_to_file(escalated_prompt, filename="escalated_prompt.md")
 
 if __name__ == "__main__":
-    goal = os.environ.get("INTEGRATION_GOAL", "document_sync_prompter not working correctly.")
+    goal = os.environ.get("INTEGRATION_GOAL", "Use core knowledge from local documentation to create small model MoE with Data Attribution and Influence Functions and a  Vector Symbolic Architecture.")
     area = os.environ.get("AREA_TO_IMPROVE", "agentic")
     out = run_agent_loop(user_objective=goal, target_area=area)
     print(out)

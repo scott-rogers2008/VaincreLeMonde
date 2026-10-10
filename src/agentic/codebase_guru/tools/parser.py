@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import subprocess
+from .utils import get_git_root
 
 os_walk_exclude = {
     '.aider.tags.cache.v4', '.git', '.wenv', '.wvenv', '.venv', '.vs', '.angular', '.vscode', 'node_modules', "angular", 'dist', 'browser', 'out', 'build'
@@ -64,20 +65,13 @@ class CodebaseParser:
             
             # DYNAMIC RESOLUTION FIX: Locate the file paths dynamically relative to this script
             current_script_dir = os.path.dirname(os.path.abspath(__file__)) # .../src/agentic/codebase_guru/tools/
-            repo_base = os.path.abspath(os.path.join(current_script_dir, "..", "..", "..", "..")) # Navigate up to D:\VaincreLeMonde
+            repo_base = get_git_root(current_script_dir)
             
             # Search alternative paths if the primary layout maps wrong
-            possible_paths = [
-                os.path.join(repo_base, "frontend", "src", "agents", "jsparser.js"),
-                os.path.join(self.root_dir, "frontend", "src", "agents", "jsparser.js"),
-                os.path.abspath(os.path.join(current_script_dir, "jsparser.js")) # local script fallback anchor
-            ]
+            jparser_path =  os.path.join(repo_base, "src", "frontend", "src", "agents", "jsparser.js")
             
-            agent_script = possible_paths[0]
-            for p in possible_paths:
-                if os.path.exists(p):
-                    agent_script = p
-                    break
+            if os.path.exists(jparser_path):
+                agent_script = jparser_path
 
             if not os.path.exists(agent_script):
                 print(f"⚠️ JS Parser engine script asset missing on disk surface. Skipping full AST layout for: {relative_path}")

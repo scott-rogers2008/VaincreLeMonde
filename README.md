@@ -1,11 +1,14 @@
 # VaincreLeMonde: improving the world one person at a time
 ### Winning at life begins with refining the internal compass, keeping it clean and fine-tuned so that it can help navigate us through any challenge.
 
-Welcome to the foundational core of this learning system. This repository is not a digital textbook or a passive database of facts. It is an **active development engine** designed to shift the learning process from being passive consumer of facts to a deeply sensitive, highly disciplined, independent (and interdependent) learner. So that the learner can hear, recognize, understand, and follow the guiding influence of the universe. I believe that understanding this guidance is the key to unlocking unlimited power in our lives. I'm certain that the better one understands the universe, the better they fair at life. This is about learning to live an inspired life.
+Welcome to the foundational core of this learning system. This repository is not a digital textbook or a passive database of facts. It is an **active development engine** designed to shift the learning process from being a passive consumer of facts to a deeply sensitive, highly disciplined, independent (and interdependent) learner. So that the learner can hear, recognize, understand, and follow the guiding influence of the universe. I believe that understanding this guidance is the key to unlocking unlimited power in our lives. I'm certain that the better one understands the universe, the better they fair at life. This is about learning to live an inspired life.
 
-## The Learning Hierarchy (Creating habits to form an Active Improvemnent Engine)
+An important part of gaining that inspirational guidance is in starting with a [Foundational Understanding](/books/Understanding_This/This.md) and understanding the nature of knowledge and learning. This system is engineered to be as open, accessible, accepting, and genuinely helpful as possible.
+
+## The Learning Hierarchy (Creating habits to form an Active Improvement Engine)
 The code and tools here are meant to make it continuously easier improve and build on that improvement where each success helps spark further growth. Where one doesn't stagnate on having reached a goal of any one ladder of learning but rather harnesses each success to help fuel continuous, life-long accomplishments.
 
+```text
        ┌────────────────────────────────────────────────────────┐
        ▼                                                        │
 [ 🟩 THE MINDSET SPARK ] ──► [ 🟦 EXECUTION TOOLS & CODE ] ──► [ 🟨 SENSORY COMPASS ] 
@@ -13,6 +16,7 @@ The code and tools here are meant to make it continuously easier improve and bui
        ▲                                                        │
        └─────────────────── [ THE REWARD LOOP ] ────────────────┘
                        (Dopamine, Growth, & Higher Power)
+```
 
 ## 🟩 1. The Mindset Spark (Where Growth Begins)
 

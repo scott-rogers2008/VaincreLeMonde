@@ -26,7 +26,7 @@ The following multi-lingual instructional frameworks have been retrieved nativel
 """
 
 DOC_DRIVER_TEMPLATE = """### 🎓 SYSTEM INSTRUCTION (PART {chunk_counter} OF MULTI-PART CONTEXT)
-You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. DO NOT write or edit source code files. Acknowledge receipt of Part {chunk_counter} and wait for the remaining payload.
+You are a Principal AI Learning Architect. We are expanding our complex multi-language Agentic Tutor System. Acknowledge receipt of Part {chunk_counter} and wait for the remaining payload.
 
 ---
 ### 📊 ENVIRONMENT PROFILE

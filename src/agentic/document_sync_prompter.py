@@ -142,11 +142,6 @@ class DocumentSyncPrompter:
         total_files = self.sync_engine.get_number_of_indexed_documents()
         # Correctly tracks unique files provided instead of database graph text chunks
         provided_files = len(compiled_text_blocks)
-        
-        textbook_context_rules = (
-            "## [PEDAGOGICAL CORE MANDATE]\n"
-            "Review dynamically gathered workspace context layers. Limit responses entirely to the stated objective."
-        )
 
         chunks = []
         chunk_counter = 1
@@ -158,8 +153,7 @@ class DocumentSyncPrompter:
             chunk_counter=chunk_counter,
             target_area=target_area,
             total_files=total_files,
-            provided_files=provided_files,
-            textbook_context_rules=textbook_context_rules
+            provided_files=provided_files
         )
         chunks.append(part_driver)
         chunk_counter += 1
