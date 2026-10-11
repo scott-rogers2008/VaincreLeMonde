@@ -1,8 +1,11 @@
-# This
+<!-- "books/Understanding_This/This.md" -->
+# This: A Grounded Architecture and Growth System
 
-This is a textbook that will help me focus on the basics of what is here and how I use it to help improve me and what is here -- bootstraps to the moon. The AI that I'm creating with this project will be as self-aware as possible, but the primary goal of this AI is helping one to learn, know, and remember. It is the firm belief of this system that those that learn to rely on AI will always find that they are standing on shaky ground, while their hallucinations or delusions might agree it doesn't make them real. But using AI to improve yourself will not only make you better and the AI more reliable, it can also help make the world a better place.
+This is or will be a complete system that will help me focus on the basics of what is here and how I use it to help improve me (and hopefully other) to grow -- bootstraps to the moon. The AI that I'm creating with this project will be as self-aware as possible, self-correcting (with user help), and a tutor, the primary goal of this AI is helping one to learn, know, and remember. It is the firm belief of this system that those that learn to rely on AI will always find that they are standing on shaky ground, while their (both human and AI) hallucinations or delusions might agree it doesn't make them real. But using AI to improve myself will not only make me better also the AI more reliable, it can also help make the world a better place.
 
 ---
+
+I've included here (in the intro) at least temporarily the heart of learning and of life, LOVE: The Foundation of Understanding (And Ultimate Philosophy)
 
 ## 🧭 Part 1: Foundational Understanding (The Philosophy of Reality)
 ### The Cartesian Kernel: "Me"

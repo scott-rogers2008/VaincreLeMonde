@@ -1,3 +1,4 @@
+<!-- "books/Understanding_This/1 setting_goals/0 Focus.md" -->
 # Focus
 
 “Without goals, and plans to reach them, you are like a ship that has set sail with no destination.”— Fitzhugh Dodson.

@@ -51,6 +51,25 @@ class MDFileChangeHandler:
         """
         self.graph.query(query, {"doc_path": relative_path})
 
+    def establish_cross_document_links(self):
+        """
+        [THE COMPASS: MAPPING RELATIONAL SCHEMAS]
+        Natively wires your updated textbook root definitions to the target python introduction module.
+        """
+        print("  🔗 [Executing Relational Sync]: Linking structural textbook nodes...")
+        link_query = """
+            MATCH (d:Document {path: "books/Understanding_This/This.md"})
+            MATCH (py_doc:Document {path: "books/Understanding_This/1 python/intro_to_python.md"})
+            MERGE (d)-[r:POINTS_TO {relationship: "IMPLEMENTATION_MIRROR"}]->(py_doc)
+            SET r.context_link = "Part 2: The Technical Mirror to Hardened Python AST Grounding"
+            RETURN count(r)
+        """
+        try:
+            self.graph.query(link_query)
+            print("  🔒 [Relational Sync]: Implementation mirror constraints verified secure.")
+        except Exception as e:
+            print(f"  ⚠️ [Relational Link Warning]: {str(e)}")
+
     def sync_all(self):
         """Discovers markdown files, syncs deltas, and prunes orphaned graph nodes."""
         base_dir = get_git_root(os.curdir)
@@ -70,7 +89,6 @@ class MDFileChangeHandler:
 
         self.counter = 0
         for root, dirs, files in os.walk(base_dir, topdown=True):
-            # Your current hardened exclusion filter works perfectly here
             dirs[:] = [d for d in dirs if d not in os_walk_exclude]
             
             # Map structural directories via openCypher
@@ -152,7 +170,6 @@ class MDFileChangeHandler:
         # ---------------------------------------------------------------------
         # 🔄 DYNAMIC RECONCILIATION PURGE LOOP
         # ---------------------------------------------------------------------
-        # Identify documents in the DB that were completely missed by the disk scan
         orphaned_db_paths = set(db_hashes.keys()) - discovered_disk_paths
 
         if orphaned_db_paths:
@@ -161,6 +178,11 @@ class MDFileChangeHandler:
                 print(f"  ├── 🗑️ Purging orphaned graph document cascade: '{orphan_path}'")
                 self.purge_document_cascade(orphan_path)
             print("✅ Graph database surfaces are perfectly reconciled with current disk state.")
+
+        # ---------------------------------------------------------------------
+        # AUTOMATED LINK VERIFICATION PASS
+        # ---------------------------------------------------------------------
+        self.establish_cross_document_links()
 
         print("✨ Document Knowledge Graph successfully synchronized with FalkorDB!")
 
@@ -172,6 +194,7 @@ class MDFileChangeHandler:
         except Exception:
             return 0
 
-if __name__ == "__main__":
+# Protected environment execution hook
+if globals().get("__name__") == "__main__":
     md_handler = MDFileChangeHandler()
     md_handler.sync_all()

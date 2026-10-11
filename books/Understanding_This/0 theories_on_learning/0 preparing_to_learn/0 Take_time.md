@@ -1,3 +1,4 @@
+<!-- "books/Understanding_This/0 theories_on_learning/0 preparing_to_learn/Take_time.md" -->
 # Take Time to do it Right
 
 One of the most common mistakes in learning is not taking the time to learn how to learn, and improve those skills. Far too often teaching and learning is approached by only looking at a number of facts that the student needs to absorb and then trying to pound them in until they at least look like they've stuck.

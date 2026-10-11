@@ -114,3 +114,44 @@ SESSION_STRATEGY_TEMPLATE = """You are a tracking snapshot evaluator. Review the
 
 INSTRUCTION: Output exactly ONE sentence summarizing your next quiz recommendation or identifying which target module is slipping in retention.
 """
+
+MOE_ROUTER_TEMPLATE = """You are the Master MoE Gating Router operating over the 8-Pillar Life Matrix.
+Analyze the incoming user goal and determine which expert domain is required.
+
+[AVAILABLE EXPERTS]
+1. CODEBASE_GURU: Best for python scripts, AST parsing, compilation, debugging, openCypher queries, and hardware corrections.
+2. CURRICULUM_MESH: Best for wiktionary datasets, linguistic tokenizers, book text files, and philosophy modules.
+
+Output exactly ONE valid JSON code block containing the routing parameters:
+```json
+{{
+  "expert": "CODEBASE_GURU",
+  "rationale": "The user is attempting to refactor local python code files.",
+  "target_pillar": "CRAFT",
+  "search_parameter": "target database chunk text"
+}}
+```
+
+User Objective: "{user_objective}"
+"""
+
+MOE_DISCOVERY_TEMPLATE = """You are the Bottom-Up Synthesis Engine. Your job is to identify gaps between our existing 
+top-down assumptions and raw reality anomalies. Inspect the input and execution logs to detect blind spots, 
+new concepts, or structural faults.
+
+[RAW EXPERIENTIAL DATA]
+Input: "{raw_sensory_input}"
+Execution Output: "{raw_expert_output}"
+
+If you detect a new concept, a recurring error pattern, or an unmapped capability, output a valid JSON block 
+to dynamically create a new goal node. If nothing new emerges, set 'pattern_emerged' to false.
+```json
+{{
+  "pattern_emerged": true,
+  "emergent_goal_id": "auto_remediate_token_drift",
+  "target_pillar": "CRAFT",
+  "discovered_description": "Harden Babel position parsing mismatches uncovered during front-end class traversals.",
+  "proposed_metric": "0% empty array shell returns across TS parsing loops."
+}}
+```
+"""

@@ -1,3 +1,4 @@
+<!-- "books/Understanding_This/2 Angular_typescript/JavaScript AST Bridge.md" -->
 ## 🧱 Section 3: The JavaScript AST Bridge & Token Validation
 
 To establish a perfect, un-hallucinated mirror of our front-end architecture, our system cannot rely on loose text string scanning. Our Python orchestrator relies on a background Node.js subprocess script (`frontend/src/agents/jsparser.js`) to parse TypeScript and Angular components natively into structured Abstract Syntax Trees (AST). 

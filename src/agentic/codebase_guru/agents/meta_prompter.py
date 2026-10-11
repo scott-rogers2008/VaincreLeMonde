@@ -170,17 +170,35 @@ class AdvancedMetaPrompter:
         
         for rel_p, contents in packaged_files:
             file_block = f"### 📄 TARGET AREA SOURCE: `{rel_p}`\n```text\n{contents}\n```\n\n"
-            if len(current_chunk_text) + len(file_block) > MAX_CHUNK_CHARS and current_chunk_text.strip():
-                # CRITICAL SAFETY UNIFICATION: Injected constraints into target file payload headers
-                chunk_payload = MIDDLE_CHUNK_TEMPLATE.format(
-                    chunk_counter=chunk_counter,
-                    current_chunk_text=current_chunk_text
-                )
-                chunks.append(chunk_payload)
-                chunk_counter += 1
-                current_chunk_text = file_block
+            
+            # If a singular file chunk breaks your safe paste character threshold
+            if len(file_block) > MAX_CHUNK_CHARS:
+                sub_lines = file_block.split("\n")
+                for line in sub_lines:
+                    formatted_line = f"{line}\n"
+                    # Trace buffer length before merging the line token
+                    if len(current_chunk_text) + len(formatted_line) > MAX_CHUNK_CHARS:
+                        if current_chunk_text.strip():
+                            chunks.append(MIDDLE_CHUNK_TEMPLATE.format(
+                                chunk_counter=chunk_counter, 
+                                current_chunk_text=current_chunk_text
+                            ))
+                            chunk_counter += 1
+                        current_chunk_text = formatted_line
+                    else:
+                        current_chunk_text += formatted_line
             else:
-                current_chunk_text += file_block
+                # Standard path fallback tracking for normal-sized codebase targets
+                if len(current_chunk_text) + len(file_block) > MAX_CHUNK_CHARS:
+                    if current_chunk_text.strip():
+                        chunks.append(MIDDLE_CHUNK_TEMPLATE.format(
+                            chunk_counter=chunk_counter, 
+                            current_chunk_text=current_chunk_text
+                        ))
+                        chunk_counter += 1
+                    current_chunk_text = file_block
+                else:
+                    current_chunk_text += file_block
 
         if current_chunk_text.strip():
             chunk_payload = FINAL_CHUNK_TEMPLATE.format(

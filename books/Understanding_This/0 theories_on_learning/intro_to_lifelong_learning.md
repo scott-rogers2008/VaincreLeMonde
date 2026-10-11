@@ -1,3 +1,4 @@
+<!-- "books/Understanding_This/0 theories_on_learning/intro_to_lifelong_learning.md" -->
 # Getting Started on the Right Foot
 
 The human mind is a fire to be kindled, not a vessel to be filled. Centuries ago, in his reflections on how we listen and absorb the world, the philosopher Plutarch wrote a warning that bridges the ancient world directly to the digital age:
