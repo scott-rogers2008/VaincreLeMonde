@@ -1,0 +1,233 @@
+/* Container framework layout definitions */
+.study-container {
+  padding: 24px;
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+/* Master header navigation layout classes */
+.study-header {
+  border-radius: 6px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.nav-back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Step 1: Ingestion workflow entry deck classes */
+.ingest-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.ingest-title {
+  color: #333;
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.pedagogical-intent {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  border-left: 4px solid #3f51b5;
+  padding-left: 12px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+
+.styled-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.styled-select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.action-submit-btn {
+  padding: 14px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s, background-color 0.2s;
+  margin-top: 10px;
+}
+
+.action-submit-btn:hover {
+  background-color: #303f9f;
+}
+
+.action-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ingestion telemetry log alert spaces */
+.telemetry-log {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.telemetry-log.success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #dcfce7;
+}
+
+.telemetry-log.error {
+  background-color: #fdf2f2;
+  color: #9b1c1c;
+  border: 1px solid #fee2e2;
+}
+
+/* Step 2: Split columns work desk space layouts */
+.study-grid-workspace {
+  max-width: 1500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.workspace-column {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.column-header-container {
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+  margin-bottom: 15px;
+}
+
+.column-title {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.scrollable-sentence-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* Study items cards state configurations */
+.study-sentence-card {
+  padding: 15px;
+  border: 1px solid #eee;
+  border-left: 4px solid #3f51b5;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: white;
+  transition: all 0.2s ease-in-out;
+}
+
+.study-sentence-card:hover {
+  background-color: #fcfcfc;
+  border-color: #cbd5e1;
+}
+
+.study-sentence-card.flagged {
+  border-left-color: #e91e63;
+  background-color: #fff5f7;
+}
+
+.sentence-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2c3e50;
+}
+
+.love-highlight-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #c2185b;
+  font-weight: bold;
+  background: #fce4ec;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Anchor reference styling blocks */
+.english-anchor-card {
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fafafa;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+}
+
+.anchor-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #555;
+}

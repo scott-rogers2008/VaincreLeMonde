@@ -34,9 +34,6 @@ class AdvancedMetaPrompter:
         except Exception:
             vector = None
 
-        if not vector:
-            return "## [PEDAGOGICAL CORE MANDATE]\nLimit outputs strictly to meta-prompts. Prohibit direct functional updates."
-
         # openCypher Query: Locate chunks whose parent document path originates within the books tree
         query = """
         CALL db.idx.vector.queryNodes('Chunk', 'embedding', $limit, vecf32($vector)) YIELD node, score

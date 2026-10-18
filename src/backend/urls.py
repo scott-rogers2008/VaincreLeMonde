@@ -31,4 +31,5 @@ urlpatterns = [
     path(r'api-login-user/', views.LoginUserView.as_view()),
     path(r'(?P<path>.*\..*)$', RedirectView.as_view(url='/static/%(path)s')),
     path(r'', TemplateView.as_view(template_name='angular/index.html')),
+    path(r'api-study-ingest/', include('API.urls')),
 ]

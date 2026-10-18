@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import datetime
 from pathlib import Path
 import django
+import os
 from django.utils.encoding import smart_str
 django.utils.encoding.smart_text = smart_str
 from django.utils.translation import gettext_lazy
@@ -31,7 +32,12 @@ SECRET_KEY = 'django-insecure-_oj(d&syo!o6b7y6&9lrcr^f4k3&o3u9#0vtxz5s0zy5jl5zvo
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.1.247', 
+    '127.0.0.1', 
+    'localhost', 
+    '0.0.0.0'
+    ]
 
 
 # Application definition
@@ -88,10 +94,15 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'static'),
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, '..', 'frontend', 'dist', 'frontend', 'browser'),
+            ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',

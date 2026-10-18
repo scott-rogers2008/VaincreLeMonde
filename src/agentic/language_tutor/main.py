@@ -3,15 +3,14 @@ import os
 import json
 import re
 import urllib.request
-from utils import get_git_root
 
 # Pull low-level capability tools directly from your existing modules
-from language_tutor.tools.database_tools import get_language_id, db_content_reader
-from language_tutor.tools.library_tools import library_search, register_work
-from language_tutor.tools.file_management import directory_explorer, read_markdown_content
-from language_tutor.tools.scraping import get_raw_html, process_and_save_document
-from language_tutor.tools.linguistic import sentence_splitter, loader as db_loader
-from language_tutor.tools.history import update_agent_memory, get_shared_memory
+from .tools.database_tools import get_language_id, db_content_reader
+from .tools.library_tools import library_search, register_work
+from .tools.file_management import directory_explorer, read_markdown_content
+from .tools.scraping import get_raw_html, process_and_save_document
+from .tools.linguistic import sentence_splitter, loader as db_loader
+from .tools.history import update_agent_memory, get_shared_memory
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "qwen3.5:9b" # Optimized configuration model for local reasoning

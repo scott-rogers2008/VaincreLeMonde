@@ -1,0 +1,92 @@
+<div class="study-container">
+  
+  <!-- Sticky Navigation Header Bar -->
+  <mat-toolbar color="primary" class="study-header">
+    <span>🎓 Study Portal: The Sculpting of Our Souls</span>
+    <div *ngIf="currentStep === 'study'">
+      <button class="nav-back-btn" (click)="goToStep('ingest')">
+        📥 Load Another Discourse
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <!-- STEP 1: INGESTION SCREEN (Form Control and Parameter Setup) -->
+  <div *ngIf="currentStep === 'ingest'" class="ingest-card">
+    <h2 class="ingest-title">📦 Dynamic Curriculum Setup</h2>
+    <p class="pedagogical-intent">
+      Process general conference materials to map linguistic structures. The core objective of all language acquisition and personal progression is the realization of Christ-like love.
+    </p>
+
+    <div class="form-group">
+      <div class="input-field-wrapper">
+        <label class="form-label">DISCOURSE ADDRESS URL</label>
+        <input type="text" [(ngModel)]="targetUrl" class="styled-input">
+      </div>
+
+      <div class="input-field-wrapper">
+        <label class="form-label">TARGET STUDY LANGUAGE</label>
+        <select [(ngModel)]="chosenLanguage" class="styled-select">
+          <option *ngFor="let lang of languageTracks" [value]="lang">{{ lang }}</option>
+        </select>
+      </div>
+
+      <!-- 🛠️ FIX: Added the missing '=' sign right after the (click) listener wrapper -->
+      <button [disabled]="isProcessing" (click)="triggerContentIngestion()" class="action-submit-btn">
+        <span *ngIf="!isProcessing">🔄 Synchronize Learning Matrix</span>
+        <span *ngIf="isProcessing">⚡ Syncing Mesh Processing Channels...</span>
+      </button>
+    </div>
+
+    <!-- Telemetry status box applies clean context rules based on content responses -->
+    <div *ngIf="statusMessage" class="telemetry-log" 
+         [ngClass]="statusMessage.includes('❌') ? 'error' : 'success'">
+      {{ statusMessage }}
+    </div>
+  </div>
+
+  <!-- STEP 2: INTERACTIVE SIDE-BY-SIDE SPLIT SCREEN WORKSPACE -->
+  <div *ngIf="currentStep === 'study'" class="study-grid-workspace">
+    
+    <!-- Target Study Track Column (Spanish/French/German/Korean) -->
+    <div class="workspace-column">
+      <div class="column-header-container">
+        <h3 class="column-title">🌍 Core Text Focus: {{ chosenLanguage }}</h3>
+      </div>
+
+      <div class="scrollable-sentence-feed">
+        <div *ngFor="let item of studySentences" 
+             (click)="toggleLovePrinciple(item)"
+             class="study-sentence-card"
+             [ngClass]="{'flagged': item.isCoreLovePrinciple}">
+          <p class="sentence-text">{{ item.text }}</p>
+          <span *ngIf="item.isCoreLovePrinciple" class="love-highlight-badge">
+            💝 Highlighted Foundation Rule of Love
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grounding English Anchor Reference Column -->
+    <div class="workspace-column">
+      <div class="column-header-container">
+        <h3 class="column-title">🇺🇸 English Context Anchor</h3>
+      </div>
+
+      <div class="scrollable-sentence-feed">
+        <div class="english-anchor-card">
+          <p class="anchor-text"><strong># The Sculpting of Our Souls</strong></p>
+        </div>
+        <div class="english-anchor-card">
+          <p class="anchor-text"><strong>### By Sister Tamara W. Runia</strong></p>
+        </div>
+        <div class="english-anchor-card">
+          <p class="anchor-text">The gospel isn’t the umbrella; it’s the solid rock we’re standing on during the storm—that “sure foundation … whereon if men build they cannot fall.”</p>
+        </div>
+        <div class="english-anchor-card">
+          <p class="anchor-text">God’s love has moved me from questions that begin with “why” to reflections that begin, “I know that God loves me, so what is supposed to be happening here?”</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
