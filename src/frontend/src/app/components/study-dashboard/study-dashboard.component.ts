@@ -21,7 +21,7 @@ export class StudyDashboardComponent implements OnInit {
   public isProcessing: boolean = false;
   
   // Dynamic application screen tracker
-  public currentStep: 'ingest' | 'study' = 'ingest'; 
+  public currentStep: 'ingest' | 'study' = 'study'; 
   
   public languageTracks: string[] = ['English', 'Spanish', 'French', 'German', 'Korean'];
   public studySentences: SentenceItem[] = [];
@@ -32,7 +32,7 @@ export class StudyDashboardComponent implements OnInit {
 
   public goToStep(step: 'ingest' | 'study') {
     this.currentStep = step;
-    if (step === 'ingest') {
+    if (step === 'study') {
       this.statusMessage = '';
     }
   }

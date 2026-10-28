@@ -7,7 +7,9 @@ import { RegisterComponent } from './components/register/register.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { BlogComponent } from './components/blog/blog.component';
+import { StudyLoaderComponent } from './components/study-loader/study-loader.component';
 import { StudyDashboardComponent } from './components/study-dashboard/study-dashboard.component';
+
 
 const appRoutes: Routes = [
 	{
@@ -29,6 +31,10 @@ const appRoutes: Routes = [
     {
       path: 'blog',
       component: BlogComponent,
+    },
+    {
+      path: 'study-loader',
+      component: StudyLoaderComponent,
     },
     {
       path: 'study-dashboard',

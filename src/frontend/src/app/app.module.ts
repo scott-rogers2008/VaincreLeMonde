@@ -15,6 +15,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { LandingComponent } from './components/landing/landing.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { StudyLoaderComponent } from './components/study-loader/study-loader.component'; 
 import { StudyDashboardComponent } from './components/study-dashboard/study-dashboard.component'; 
 
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -30,7 +31,8 @@ import { BlogComponent } from './components/blog/blog.component';
     RegisterComponent,
     LandingComponent,
     DashboardComponent,
-    StudyDashboardComponent 
+    StudyLoaderComponent,
+    StudyDashboardComponent
   ],
   imports: [
     BrowserModule,
