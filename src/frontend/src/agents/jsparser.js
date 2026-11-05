@@ -17,12 +17,38 @@ function calculateHash(text) {
 
 try {
     const code = fs.readFileSync(filePath, 'utf-8');
+    const codebaseMap = { classes: [], functions: [] };
+
+    // Direct extraction fallback routing for markup and style files
+    if (filePath.endsWith('.html')) {
+        codebaseMap.functions.push({
+            name: "HTML_Template_Body",
+            docstring: "Raw HTML Presentation view component markup text",
+            doc_hash: "",
+            body: code,
+            body_hash: calculateHash(code)
+        });
+        console.log(JSON.stringify(codebaseMap));
+        process.exit(0);
+    } 
+    
+    if (filePath.endsWith('.css')) {
+        codebaseMap.functions.push({
+            name: "CSS_Style_Rules",
+            docstring: "Raw CSS layout definitions sheet style rules",
+            doc_hash: "",
+            body: code,
+            body_hash: calculateHash(code)
+        });
+        console.log(JSON.stringify(codebaseMap));
+        process.exit(0);
+    }
+
+    // Standard Babel traversal fallback engine for JavaScript / TypeScript source paths
     const ast = parser.parse(code, {
         sourceType: "module",
         plugins: ["typescript", "jsx", "decorators-legacy"]
     });
-
-    const codebaseMap = { classes: [], functions: [] };
 
     traverse(ast, {
         // Pattern 1: Standard Named Functions

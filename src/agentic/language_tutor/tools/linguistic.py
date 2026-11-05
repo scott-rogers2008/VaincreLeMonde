@@ -18,6 +18,26 @@ def loader(document_text: str, lang_id: int, work_id: int) -> list:
         
     return all_sentences
 
+def loader_with_result_handle(document_text: str, lang_id: int, title: str, path: str) -> int:
+    """
+    Allocates a registry record inside literary_works, splits document chunks,
+    and commits structural sentence tokens safely down your database schema.
+    """
+    with engine.begin() as conn:
+        # Register the literary work and extract the tracking primary key
+        query = text("""
+            INSERT INTO literary_works (title, language_id, work_type, local_path)
+            VALUES (:title, :lang, 'BOOK', :path)
+            RETURNING id;
+        """)
+        work_id = conn.execute(query, {
+            "title": title, "lang": lang_id, "path": path
+        }).scalar()
+
+    # Dispatch structural chunk processing paths
+    loader(document_text, lang_id, work_id)
+    return work_id
+
 def sentence_splitter(text_block: str, lang_id: int) -> list:
     """Splits raw text segments into verified clean sentences via SpaCy pipelines."""
     if text_block.startswith("Error") or "CRITICAL_FAILURE" in text_block:

@@ -2,19 +2,62 @@
 import os
 import re
 import sys
+import subprocess
+import logging
 from .agents.exploration_agent import DeepSeekR1Agent
 from .agents.meta_prompter import AdvancedMetaPrompter
+
+logger = logging.getLogger(__name__)
 
 def contains_valid_code_block(text: str) -> bool:
     if not text:
         return False
-    return bool(re.search(r"```(?:python|ts|tsx|js|jsx|json)", text))
+    # Explicitly recognizes html and css alongside standard programming languages
+    return bool(re.search(r"```(?:python|ts|tsx|js|jsx|json|html|css)", text))
+
+def execute_repository_git_sync() -> bool:
+    """
+    Spawns a subprocess to execute git_sync.py at the workspace root area
+    to ensure all local tracking metrics and graph hashes are synchronized.
+    """
+    print("🔄 [State Engine Sync]: Executing repository git_sync.py synchronization pass...")
+    try:
+        # Determine the project directory root path relative to this script location
+        base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../../"))
+        sync_script_path = os.path.join(base_dir, "git_sync.py")
+        
+        if not os.path.exists(sync_script_path):
+            # Fallback check for alternate script paths in nested directories
+            sync_script_path = os.path.join(base_dir, "src", "git_sync.py")
+
+        if not os.path.exists(sync_script_path):
+            print("⚠️ [Sync Warning]: git_sync.py script node not detected at root hooks. Proceeding with static disk state.")
+            return False
+
+        # Run via the active environment interpreter process handle
+        cmd = [sys.executable, sync_script_path]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        
+        if result.returncode == 0:
+            print("✨ [Sync Success]: Codebase graph hashes committed atomically to active registries.")
+            return True
+        else:
+            print(f"❌ [Sync Warning Failure]: git_sync.py exited with non-zero status code: {result.returncode}")
+            print(f"Standard Error Log Output:\n{result.stderr}")
+            return False
+            
+    except Exception as e:
+        print(f"⚠️ [Sync Interrupted]: Subprocess tracking exception logged: {str(e)}")
+        return False
 
 def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int = 4) -> str:
     """
-    Executes a systemic refactoring pass. 
-    Returns the final answer or an error message to the calling process.
+    Executes a systemic refactoring pass. Automatically runs git_sync beforehand
+    to prevent stale filesystem footprints from confusing context models.
     """
+    # 🔒 SECURE AUTOMATED GATEWAY: Sync repository metrics prior to building prompt layers
+    execute_repository_git_sync()
+
     prompter = AdvancedMetaPrompter()
     
     # 🎯 MODE 1: TARGETED AREA INTERCEPT
@@ -126,7 +169,6 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         history_payload = "\n\n".join(execution_history)
         context_payload = "\n\n".join(graph_context_log)
         
-        # Package history logs along with your multi-language context blueprints
         escalated_prompt = prompter.generate_escalation_prompt(
             failed_task=user_objective,
             loop_history=history_payload,
@@ -135,7 +177,7 @@ def run_agent_loop(user_objective: str, target_area: str = None, max_steps: int 
         prompter.export_prompt_to_file(escalated_prompt, filename="escalated_prompt.md")
 
 if __name__ == "__main__":
-    goal = os.environ.get("INTEGRATION_GOAL", "Start working on the web application.")
+    goal = os.environ.get("INTEGRATION_GOAL", "Improve study-dashboard to create a quiz based on selected materials.")
     area = os.environ.get("AREA_TO_IMPROVE", "src")
     out = run_agent_loop(user_objective=goal, target_area=area)
     print(out)

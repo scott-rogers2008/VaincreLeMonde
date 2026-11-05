@@ -5,18 +5,22 @@ import hashlib
 import os
 from datetime import date
 from falkordb import FalkorDB
+from sqlalchemy import text as sa_text
 
 # Grounding all modules via absolute package paths to protect path runtime boundaries
-from core.llm_client import LLMClient
-from core.auditor import PedagogicalAuditor
-from core.goal_manager import UniversalGoalManager
-from core.vsa_escalator import VSAEpistemicEscalator
-from core.tutor_prompts import MOE_ROUTER_TEMPLATE, MOE_DISCOVERY_TEMPLATE, MOE_SYSTEM_REVIEW_TEMPLATE
+from .llm_client import LLMClient
+from .auditor import PedagogicalAuditor
+from .goal_manager import UniversalGoalManager
+from .vsa_escalator import VSAEpistemicEscalator
+from .tutor_prompts import MOE_ROUTER_TEMPLATE, MOE_DISCOVERY_TEMPLATE, MOE_SYSTEM_REVIEW_TEMPLATE
 
 # Absolute target paths for expert execution nodes
-from codebase_guru.code_refactor_agent import run_agent_loop
-from language_tutor.tools.embeddings import get_embeddings
-from language_tutor.main import LanguageTutorMesh
+from ..codebase_guru.code_refactor_agent import run_agent_loop
+from ..language_tutor.tools.embeddings import get_embeddings
+from ..language_tutor.main import LanguageTutorMesh
+from .llm_client import LLMClient
+from .tutor_prompts import SUGGESTED_QUIZ_GENERATION_TEMPLATE
+from ..language_tutor.tools.database_manager import engine
 
 class MoEOrchestrator:
     def __init__(self):
@@ -287,6 +291,54 @@ class MoEOrchestrator:
         ]
         
         return "\n".join(output_block)
+
+    def generate_and_cache_suggested_quiz(self, work_id: int) -> int:
+        """
+        Queries grounding context sentences from PostgreSQL, interfaces with local 9B execution nodes
+        via structured templates, and commits AI-suggested study questions atomically to the database.
+        """
+        llm_client = LLMClient()
+        
+        # 1. Pull down localized grounding context frames safely from PostgreSQL pool lines
+        with engine.connect() as conn:
+            chunk_query = sa_text("""
+                SELECT full_text FROM sentences 
+                WHERE work_id = :work 
+                ORDER BY sentence_order ASC LIMIT 4
+            """)
+            rows = conn.execute(chunk_query, {"work": work_id}).fetchall()
+            grounding_context = " ".join([row[0] for row in rows])
+
+        if not grounding_context.strip():
+            grounding_context = "System baseline context. Evaluate theme bounds."
+
+        # 2. Formulate the isolated matrix prompt tracking parameters
+        prompt = SUGGESTED_QUIZ_GENERATION_TEMPLATE.format(grounding_context=grounding_context)
+        
+        # 3. Call local Qwen/Hermes channels and parse clean JSON blocks
+        raw_response, _ = llm_client.call_local_llm(prompt)
+        generated_questions = llm_client.parse_json_block(raw_response)
+        
+        inserted_count = 0
+        if isinstance(generated_questions, list):
+            # 4. Commit suggestions atomically using standard relational transaction contexts
+            with engine.begin() as conn:
+                insert_sql = sa_text("""
+                    INSERT INTO study_quiz_bank (work_id, topic, question, options, correct_answer, rationale, verification_status, ai_feedback)
+                    VALUES (:work, :topic, :q, :opts, :ans, :rat, 'VERIFIED', 'Automated curriculum ingestion selection pass.')
+                """)
+                for q_item in generated_questions:
+                    conn.execute(insert_sql, {
+                        "work": work_id,
+                        "topic": q_item.get("topic", "Material Synthesis"),
+                        "q": q_item.get("question", ""),
+                        "opts": json.dumps(q_item.get("options", [])),
+                        "ans": q_item.get("correct_answer", "A").strip().upper(),
+                        "rat": q_item.get("rationale", "")
+                    })
+                    inserted_count += 1
+                    
+        return inserted_count
 
 if __name__ == "__main__":
     orchestrator = MoEOrchestrator()

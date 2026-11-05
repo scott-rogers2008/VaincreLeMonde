@@ -16,11 +16,41 @@
   align-items: center;
 }
 
+.header-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-tab-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.nav-tab-btn.active {
+  background: white;
+  color: #3f51b5;
+  border-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .nav-back-btn {
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -69,10 +99,11 @@
 }
 
 .form-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
-  color: #555;
-  letter-spacing: 0.5px;
+  color: #64748b;
+  letter-spacing: 0.75px;
+  text-transform: uppercase;
 }
 
 .styled-input {
@@ -105,6 +136,7 @@
   font-size: 14px;
   transition: opacity 0.2s, background-color 0.2s;
   margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(63, 81, 181, 0.2);
 }
 
 .action-submit-btn:hover {
@@ -114,6 +146,7 @@
 .action-submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background-color: #94a3b8;
 }
 
 /* Ingestion telemetry log alert spaces */
@@ -139,7 +172,7 @@
 }
 
 /* Step 2: Split columns work desk space layouts */
-.study-grid-workspace {
+.workspace-grid {
   max-width: 1500px;
   margin: 0 auto;
   display: grid;
@@ -230,4 +263,190 @@
   font-size: 15px;
   line-height: 1.6;
   color: #555;
+}
+
+/* ===================================================================== */
+/* STEP 3: SPACED-REPETITION QUIZ INTERFACE VIEW STYLES                */
+/* ===================================================================== */
+.quiz-workspace-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.quiz-card-header {
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.quiz-title {
+  color: #1e293b;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.quiz-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin: 6px 0 0 0;
+}
+
+.quiz-body-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.question-container-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #334155;
+  font-family: inherit;
+}
+
+.student-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.styled-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: vertical;
+  background-color: #fff;
+  color: #334155;
+  transition: border-color 0.2s;
+}
+
+.styled-textarea:focus {
+  outline: none;
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.15);
+}
+
+/* Quiz loading animation tracker */
+.quiz-spinner-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 16px;
+}
+
+.loading-pulse {
+  width: 40px;
+  height: 40px;
+  background-color: #3f51b5;
+  border-radius: 50%;
+  animation: sk-scaleout 1.2s infinite ease-in-out;
+}
+
+@keyframes sk-scaleout {
+  0% { transform: scale(0); }
+  100% {
+    transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+.spinner-text {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Evaluation result scorecard blocks */
+.grade-evaluation-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metrics-summary-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.metric-score-pill, .metric-complexity-pill {
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.metric-score-pill.passing {
+  background-color: #dcfce7;
+  color: #14532d;
+  border: 1px solid #bbf7d0;
+}
+
+.metric-score-pill.remediate {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+
+.metric-complexity-pill {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.evaluation-rationale-box {
+  background: white;
+  border-left: 4px solid #475569;
+  padding: 16px;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.rationale-header {
+  margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.rationale-text {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.next-quiz-btn {
+  padding: 12px 20px;
+  background-color: #475569;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+}
+
+.next-quiz-btn:hover {
+  background-color: #334155;
 }

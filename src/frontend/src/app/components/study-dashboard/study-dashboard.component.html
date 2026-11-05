@@ -1,92 +1,84 @@
+<!-- src/frontend/src/app/components/study-dashboard/study-dashboard.component.html -->
 <div class="study-container">
   
-  <!-- Sticky Navigation Header Bar -->
   <mat-toolbar color="primary" class="study-header">
-    <span>🎓 Study Portal: The Sculpting of Our Souls</span>
-    <div *ngIf="currentStep === 'study'">
-      <button class="nav-back-btn" (click)="goToStep('ingest')">
-        📥 Load Another Discourse
-      </button>
+    <span>🎓 Core Curriculum Knowledge Mesh Dashboard</span>
+    <div class="header-nav-actions" *ngIf="selectedFile">
+      <button class="nav-tab-btn" [ngClass]="{'active': currentStep === 'study'}" (click)="goToStep('study')">📖 Analyze text</button>
+      <button class="nav-tab-btn" [ngClass]="{'active': currentStep === 'quiz'}" (click)="goToStep('quiz')">🧠 Live Quiz</button>
+      <button class="nav-back-btn" (click)="selectedFile = null; goToStep('explorer')" style="background-color: #475569;">📁 File Explorer</button>
     </div>
   </mat-toolbar>
 
-  <!-- STEP 1: INGESTION SCREEN (Form Control and Parameter Setup) -->
-  <div *ngIf="currentStep === 'ingest'" class="ingest-card">
-    <h2 class="ingest-title">📦 Dynamic Curriculum Setup</h2>
-    <p class="pedagogical-intent">
-      Process general conference materials to map linguistic structures. The core objective of all language acquisition and personal progression is the realization of Christ-like love.
-    </p>
-
-    <div class="form-group">
-      <div class="input-field-wrapper">
-        <label class="form-label">DISCOURSE ADDRESS URL</label>
-        <input type="text" [(ngModel)]="targetUrl" class="styled-input">
-      </div>
-
-      <div class="input-field-wrapper">
-        <label class="form-label">TARGET STUDY LANGUAGE</label>
-        <select [(ngModel)]="chosenLanguage" class="styled-select">
-          <option *ngFor="let lang of languageTracks" [value]="lang">{{ lang }}</option>
-        </select>
-      </div>
-
-      <!-- 🛠️ FIX: Added the missing '=' sign right after the (click) listener wrapper -->
-      <button [disabled]="isProcessing" (click)="triggerContentIngestion()" class="action-submit-btn">
-        <span *ngIf="!isProcessing">🔄 Synchronize Learning Matrix</span>
-        <span *ngIf="isProcessing">⚡ Syncing Mesh Processing Channels...</span>
-      </button>
-    </div>
-
-    <!-- Telemetry status box applies clean context rules based on content responses -->
-    <div *ngIf="statusMessage" class="telemetry-log" 
-         [ngClass]="statusMessage.includes('❌') ? 'error' : 'success'">
-      {{ statusMessage }}
-    </div>
-  </div>
-
-  <!-- STEP 2: INTERACTIVE SIDE-BY-SIDE SPLIT SCREEN WORKSPACE -->
-  <div>
+  <!-- STEP 1: INTERACTIVE DIRECTORY FILE EXPLORER DECK -->
+  <div *ngIf="currentStep === 'explorer'" class="explorer-wrapper-card" style="max-width: 900px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <h2 style="margin-top:0; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">📁 Material Repository Index</h2>
+    <p style="color: #64748b; font-size: 14px;">Select an ingested conference markdown block to mount into the live analytical workspace view.</p>
     
-    <!-- Target Study Track Column (Spanish/French/German/Korean) -->
-    <div class="workspace-column">
-      <div class="column-header-container">
-        <h3 class="column-title">🌍 Core Text Focus: {{ chosenLanguage }}</h3>
-      </div>
+    <div *ngIf="fileSystemTree.length === 0" style="text-align: center; padding: 30px; color: #94a3b8;">
+      No markdown library items detected under references subfolders. Use the study loader to inject text.
+    </div>
 
-      <div class="scrollable-sentence-feed">
-        <div *ngFor="let item of studySentences" 
-             (click)="toggleLovePrinciple(item)"
-             class="study-sentence-card"
-             [ngClass]="{'flagged': item.isCoreLovePrinciple}">
-          <p class="sentence-text">{{ item.text }}</p>
-          <span *ngIf="item.isCoreLovePrinciple" class="love-highlight-badge">
-            💝 Highlighted Foundation Rule of Love
-          </span>
+    <!-- Recursive Language Directory Folder Node Loops -->
+    <div *ngFor="let folderNode of fileSystemTree" class="folder-group-box" style="margin-bottom: 20px;">
+      <h4 style="background-color: #f1f5f9; padding: 8px 12px; margin: 0 0 10px 0; border-radius: 4px; color: #3f51b5; letter-spacing: 0.5px;">
+        📂 TRACK CATEGORY: {{ folderNode.folder }}
+      </h4>
+      
+      <div class="files-row-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-left: 10px;">
+        <div *ngFor="let fileNode of folderNode.files" 
+             (click)="selectDocumentFromExplorer(fileNode)"
+             class="study-sentence-card" 
+             style="cursor: pointer; padding: 12px; border-left: 4px solid #10b981; margin: 0; background: #fff;">
+          <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #334155;">{{ fileNode.displayTitle }}</h4>
+          <span style="font-size: 11px; color: #64748b; font-family: monospace;">📄 {{ fileNode.filename }}</span>
+          <span *ngIf="!fileNode.work_id" style="float: right; font-size: 10px; background: #fee2e2; color: #9b1c1c; padding: 2px 5px; border-radius:3px;">UNINDEXED</span>
         </div>
       </div>
     </div>
-
-    <!-- Grounding English Anchor Reference Column -->
-    <div class="workspace-column">
-      <div class="column-header-container">
-        <h3 class="column-title">🇺🇸 English Context Anchor</h3>
-      </div>
-
-      <div class="scrollable-sentence-feed">
-        <div class="english-anchor-card">
-          <p class="anchor-text"><strong># The Sculpting of Our Souls</strong></p>
-        </div>
-        <div class="english-anchor-card">
-          <p class="anchor-text"><strong>### By Sister Tamara W. Runia</strong></p>
-        </div>
-        <div class="english-anchor-card">
-          <p class="anchor-text">The gospel isn’t the umbrella; it’s the solid rock we’re standing on during the storm—that “sure foundation … whereon if men build they cannot fall.”</p>
-        </div>
-        <div class="english-anchor-card">
-          <p class="anchor-text">God’s love has moved me from questions that begin with “why” to reflections that begin, “I know that God loves me, so what is supposed to be happening here?”</p>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- STEP 2: SPLIT SCREEN WORKSPACE LAYOUT CONTAINER -->
+  <div *ngIf="currentStep === 'study' && selectedFile" class="workspace-grid">
+    <div class="workspace-column">
+      <div class="column-header-container">
+        <h3 class="column-title">🌍 Mounted Book Asset: {{ selectedFile.displayTitle }}</h3>
+      </div>
+      <div class="scrollable-sentence-feed">
+        <div *ngFor="let item of studySentences" (click)="toggleLovePrinciple(item)" class="study-sentence-card" [ngClass]="{'flagged': item.isCoreLovePrinciple}">
+          <p class="sentence-text">{{ item.text }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="workspace-column">
+      <div class="column-header-container"><h3 class="column-title">🇺🇸 Context Anchor Layer</h3></div>
+      <div class="scrollable-sentence-feed">
+        <div class="english-anchor-card"><p class="anchor-text">Analyzing file metadata located dynamically at disk block path: <br><strong style="font-size:11px; font-family:monospace;">{{ selectedFile.absolutePath }}</strong></p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: LIVE PERSISTENT QUIZ CARD FRAME -->
+  <div *ngIf="currentStep === 'quiz' && currentQuestion" class="quiz-workspace-card">
+    <div class="quiz-body-frame">
+      <div class="question-container-box" style="padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <h4 style="color:#3f51b5; margin:0 0 6px 0;">TOPIC ELEMENT: {{ currentQuestion.topic }}</h4>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin:0;" [innerHTML]="currentQuestion.question"></p>
+      </div>
+      <div class="quiz-options-list" style="display: flex; flex-direction: column; gap: 12px;" *ngIf="!gradeResult">
+        <div *ngFor="let opt of currentQuestion.options" (click)="selectOptionDirectly(opt)" class="study-sentence-card" [ngClass]="{'flagged': userResponse === opt}">
+          <p class="sentence-text" style="margin:0; font-weight:500;">{{ opt }}</p>
+        </div>
+      </div>
+      <div class="student-input-container" *ngIf="!gradeResult">
+        <button [disabled]="!userResponse" (click)="evaluateSelectedAnswer()" class="action-submit-btn" style="width:100%;">🚀 Dispatch Assessment Score</button>
+      </div>
+      <div *ngIf="gradeResult" class="grade-evaluation-card">
+        <span class="metric-score-pill" [ngClass]="gradeResult.score === 1 ? 'passing' : 'remediate'">{{ gradeResult.score === 1 ? '✅ CORRECT' : '❌ INCORRECT' }}</span>
+        <p style="margin:0; font-size:14px; color:#475569;">{{ currentQuestion.rationale }}</p>
+        <button (click)="advanceNextQuestion()" class="next-quiz-btn" style="margin-top:10px;">🔄 Advance Question Row</button>
+      </div>
+    </div>
+  </div>
+
 </div>

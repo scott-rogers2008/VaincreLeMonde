@@ -1,7 +1,7 @@
 # src/agentic/language_tutor/tools/__init__.py
 from .scraping import get_raw_html, process_and_save_document
 from .file_management import directory_explorer, read_markdown_content, manage_directory
-from .linguistic import sentence_splitter, loader
+from .linguistic import sentence_splitter, loader, loader_with_result_handle
 from .database_tools import db_content_reader, get_language_id, db_content_loader
 from .library_tools import register_work, library_search
 from .embeddings import get_embeddings
@@ -16,6 +16,7 @@ from .build_lexicon import HybridLexiconPipeline
 
 __all__ = [
     'loader',
+    'loader_with_result_handle',
     'db_content_reader',
     'get_language_id',
     'db_content_loader',

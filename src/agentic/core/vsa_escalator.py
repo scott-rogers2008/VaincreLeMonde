@@ -2,7 +2,7 @@
 import numpy as np
 import json
 import hashlib
-from core.llm_client import LLMClient
+from .llm_client import LLMClient
 
 class VSAEpistemicEscalator:
     def __init__(self, dimension: int = 1024):

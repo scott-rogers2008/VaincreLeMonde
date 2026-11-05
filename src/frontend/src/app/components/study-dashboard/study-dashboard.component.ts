@@ -2,38 +2,87 @@
 import { Component, OnInit } from '@angular/core';
 import { StudyService } from '../../services/study.service';
 
-interface SentenceItem {
-  id: number;
-  text: string;
-  isCoreLovePrinciple?: boolean;
-}
+interface SentenceItem { id: number; text: string; isCoreLovePrinciple?: boolean; }
+interface DBQuizQuestion { id: number; topic: string; question: string; options: string[]; correctAnswer: string; rationale: string; verificationStatus: string; }
+interface ExplorerFile { filename: string; work_id: number | null; displayTitle: string; absolutePath: string; }
+interface ExplorerFolder { folder: string; files: ExplorerFile[]; }
 
 @Component({
   selector: 'app-study-dashboard',
-  standalone: false, // Remains false to seamlessly support your AppModule layout configuration
+  standalone: false,
   templateUrl: './study-dashboard.component.html',
   styleUrls: ['./study-dashboard.component.css']
 })
 export class StudyDashboardComponent implements OnInit {
-  public targetUrl: string = 'https://churchofjesuschrist.org';
-  public chosenLanguage: string = 'English';
+  // File Explorer Core State Arrays
+  public fileSystemTree: ExplorerFolder[] = [];
+  public selectedFile: ExplorerFile | null = null;
+  public activeWorkId: number | null = null;
+
+  // Workspace trackers
+  public currentStep: 'explorer' | 'study' | 'quiz' = 'explorer';
+  public studySentences: SentenceItem[] = [];
   public statusMessage: string = '';
   public isProcessing: boolean = false;
-  
-  // Dynamic application screen tracker
-  public currentStep: 'ingest' | 'study' = 'study'; 
-  
-  public languageTracks: string[] = ['English', 'Spanish', 'French', 'German', 'Korean'];
-  public studySentences: SentenceItem[] = [];
+
+  // Quiz-specific orchestrations
+  public liveQuizQuestions: DBQuizQuestion[] = [];
+  public currentQuestion: DBQuizQuestion | null = null;
+  public currentQuestionIndex: number = 0;
+  public userResponse: string = '';
+  public gradeResult: { score: number; rationale: string } | null = null;
 
   constructor(private studyService: StudyService) { }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    this.loadUniversalFileSystemTree();
+  }
 
-  public goToStep(step: 'ingest' | 'study') {
+  public loadUniversalFileSystemTree() {
+    this.isProcessing = true;
+    this.statusMessage = 'Mapping material repository structures...';
+    
+    this.studyService.loadExplorerTree(0).subscribe({
+      next: (res: any) => {
+        this.isProcessing = false;
+        this.statusMessage = '';
+        this.fileSystemTree = res.tree || [];
+      },
+      error: (err: any) => {
+        this.isProcessing = false;
+        this.statusMessage = `❌ Explorer Fault: ${err.error?.error || err.message}`;
+      }
+    });
+  }
+
+  public selectDocumentFromExplorer(file: ExplorerFile) {
+    if (!file.work_id) {
+      alert(`⚠️ This file is present on disk but hasn't been parsed into the SQL sentence relational schemas yet. Please use the Study Loader tool first.`);
+      return;
+    }
+
+    this.selectedFile = file;
+    this.activeWorkId = file.work_id;
+    this.isProcessing = true;
+    this.statusMessage = 'Loading split-screen textual matrix parameters...';
+
+    this.studyService.getStoredSentences(this.activeWorkId).subscribe({
+      next: (fetchRes) => {
+        this.isProcessing = false;
+        this.studySentences = fetchRes.data || [];
+        this.currentStep = 'study';
+      },
+      error: (err) => {
+        this.isProcessing = false;
+        this.statusMessage = `❌ Error: ${err.message}`;
+      }
+    });
+  }
+
+  public goToStep(step: 'explorer' | 'study' | 'quiz') {
     this.currentStep = step;
-    if (step === 'study') {
-      this.statusMessage = '';
+    if (step === 'quiz' && this.activeWorkId) {
+      this.refreshQuizBankCollection();
     }
   }
 
@@ -41,39 +90,30 @@ export class StudyDashboardComponent implements OnInit {
     item.isCoreLovePrinciple = !item.isCoreLovePrinciple;
   }
 
-  public triggerContentIngestion() {
-    this.isProcessing = true;
-    this.statusMessage = `Initializing pipeline. Fetching and indexing discourse elements in ${this.chosenLanguage}...`;
-    this.studySentences = [];
-
-    this.studyService.processTalkContent(this.targetUrl, this.chosenLanguage).subscribe({
-      next: (response) => {
-        this.statusMessage = `✨ Ingestion complete! Core curriculum loaded into semantic graph frameworks. Ready to analyze theme definitions and study Christ-like love.`;
-        
-        // Extract the work tracking ID returned by your database registry commit pass
-        const targetWorkId = response.work_id || 8; 
-
-        // Query your database retrieval view to pull down sentences automatically
-        this.studyService.getStoredSentences(targetWorkId).subscribe({
-          next: (fetchRes) => {
-            this.isProcessing = false;
-            this.studySentences = fetchRes.data || [];
-            
-            // Swap step views smoothly once the server data has arrived
-            setTimeout(() => {
-              this.currentStep = 'study';
-            }, 1200);
-          },
-          error: (fetchErr) => {
-            this.isProcessing = false;
-            this.statusMessage = `⚠️ Text parsing logged successfully, but retrieval check failed: ${fetchErr.error?.error || fetchErr.message}`;
-          }
-        });
-      },
-      error: (err) => {
-        this.isProcessing = false;
-        this.statusMessage = `❌ Pipeline Execution Fault: ${err.error?.error || err.message}`;
+  public refreshQuizBankCollection() {
+    if (!this.activeWorkId) return;
+    this.studyService.loadQuizBank(this.activeWorkId).subscribe({
+      next: (res) => {
+        this.liveQuizQuestions = res.data || [];
+        this.currentQuestion = this.liveQuizQuestions.length > 0 ? this.liveQuizQuestions[this.currentQuestionIndex] : null;
       }
     });
+  }
+
+  public selectOptionDirectly(opt: string) { this.userResponse = opt; }
+
+  public evaluateSelectedAnswer() {
+    if (!this.currentQuestion || !this.userResponse) return;
+    const isCorrect = this.userResponse.trim().charAt(0).toUpperCase() === this.currentQuestion.correctAnswer.trim().toUpperCase();
+    this.gradeResult = { score: isCorrect ? 1.0 : 0.0, rationale: this.currentQuestion.rationale };
+  }
+
+  public advanceNextQuestion() {
+    this.gradeResult = null;
+    this.userResponse = '';
+    if (this.liveQuizQuestions.length > 0) {
+      this.currentQuestionIndex = (this.currentQuestionIndex + 1) % this.liveQuizQuestions.length;
+      this.currentQuestion = this.liveQuizQuestions[this.currentQuestionIndex];
+    }
   }
 }

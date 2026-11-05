@@ -165,3 +165,33 @@ with our active codebase definitions below:
 INSTRUCTION: Break down exactly how our Top-Down Intent Matrix Gating intersects with our physical Python syntax structures 
 to create an integrated, self-aware, and continuously expanding tutor environment.
 """
+
+
+SUGGESTED_QUIZ_GENERATION_TEMPLATE = """You are the DeepTutor Ingestion Curriculum Architect.
+Your task is to analyze the Grounding Context extracted from a newly loaded document and formulate TWO high-quality study/review questions.
+
+[GROUNDING CONTEXT]
+{grounding_context}
+
+[OUTPUT SPECIFICATION]
+You MUST follow this exact JSON block format structure string. Do NOT output any markdown lines or conversational filler text outside the JSON boundaries.
+
+```json
+[
+  {{
+    "topic": "Contextual Mechanics Check",
+    "question": "An elegant conceptual question probing structural parameters present in the text...",
+    "options": ["A) First choice option text", "B) Second choice option text", "C) Third choice option text", "D) Fourth choice option text"],
+    "correct_answer": "A",
+    "rationale": "Direct factual explanation explaining why option A is true based on the source context."
+  }},
+  {{
+    "topic": "Core Logical Synthesis",
+    "question": "Another targeted testing query row exploring configuration boundaries...",
+    "options": ["A) Option text", "B) Option text", "C) Option text", "D) Option text"],
+    "correct_answer": "C",
+    "rationale": "Explanatory rationale text detailing the factual proof parameters."
+  }}
+]
+```
+"""
