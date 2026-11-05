@@ -21,7 +21,7 @@ class CodebaseParser:
     def extract_comments_manually(self, file_path: str) -> list:
         """Extracts standalone comments (# or //) and tracking line numbers."""
         comments = []
-        is_js_ts = file_path.endswith(('.js', '.ts', '.jsx', '.tsx'))
+        is_js_ts_web = file_path.endswith(('.js', '.ts', '.jsx', '.tsx', '.html', '.css'))
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
@@ -31,13 +31,13 @@ class CodebaseParser:
 
         for line_idx, line in enumerate(lines, 1):
             clean_line = line.strip()
-            if not is_js_ts and clean_line.startswith('#'):
+            if not is_js_ts_web and clean_line.startswith('#'):
                 comments.append({
                     "text": clean_line.lstrip('# ').strip(),
                     "line_number": line_idx,
                     "hash": self.calculate_hash(clean_line)
                 })
-            elif is_js_ts and clean_line.startswith('//'):
+            elif is_js_ts_web and clean_line.startswith('//'):
                 comments.append({
                     "text": clean_line.lstrip('/ ').strip(),
                     "line_number": line_idx,
@@ -52,8 +52,9 @@ class CodebaseParser:
         if relative_path.startswith("src/"):
             relative_path = relative_path[4:]
 
-        # --- Handle JavaScript / TypeScript Files ---
-        if file_path.endswith(('.js', '.ts', '.jsx', '.tsx')):
+        # --- Handle JavaScript / TypeScript / HTML / CSS Files ---
+        # 🛠️ FIXED ANCHOR: Extended extension routing list matchers
+        if file_path.endswith(('.js', '.ts', '.jsx', '.tsx', '.html', '.css')):
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     source_code = f.read()
@@ -64,16 +65,14 @@ class CodebaseParser:
             file_hash = self.calculate_hash(source_code)
             
             # DYNAMIC RESOLUTION FIX: Locate the file paths dynamically relative to this script
-            current_script_dir = os.path.dirname(os.path.abspath(__file__)) # .../src/agentic/codebase_guru/tools/
+            current_script_dir = os.path.dirname(os.path.abspath(__file__))
             repo_base = get_git_root(current_script_dir)
             
             # Search alternative paths if the primary layout maps wrong
-            jparser_path =  os.path.join(repo_base, "src", "frontend", "src", "agents", "jsparser.js")
-            
-            if os.path.exists(jparser_path):
-                agent_script = jparser_path
+            jparser_path = os.path.join(repo_base, "src", "frontend", "src", "agents", "jsparser.js")
+            agent_script = jparser_path if os.path.exists(jparser_path) else ""
 
-            if not os.path.exists(agent_script):
+            if not agent_script or not os.path.exists(agent_script):
                 print(f"⚠️ JS Parser engine script asset missing on disk surface. Skipping full AST layout for: {relative_path}")
                 return {
                     "file_path": relative_path,
@@ -82,9 +81,14 @@ class CodebaseParser:
                     "comments": self.extract_comments_manually(file_path)
                 }
 
+            # 🛠️ FIXED ANCHOR: Replaced text=True with strict UTF-8 stream decoding parameters
             result = subprocess.run(
-                ['node', agent_script, file_path], capture_output=True, text=True
+                ['node', agent_script, file_path], 
+                capture_output=True, 
+                encoding='utf-8', 
+                errors='replace'
             )
+            
             if result.returncode == 0:
                 try:
                     js_data = json.loads(result.stdout)
@@ -151,7 +155,8 @@ class CodebaseParser:
             for file in files:
                 if file.startswith(".") or "node_modules" in file:
                     continue
-                if file.endswith(('.py', '.js', '.ts', '.jsx', '.tsx')):
+                # 🛠️ FIXED ANCHOR: Included html/css matching blocks into master crawler sweeps
+                if file.endswith(('.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css')):
                     full_path = os.path.join(root, file)
                     parsed_codebase.append(self.parse_file(full_path))
         return parsed_codebase

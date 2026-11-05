@@ -14,10 +14,11 @@ class GitSyncManager:
         self.embedder = LocalEmbedder()
         self.db = CodebaseGraphManager()
 
+        self.target_extensions = ('.py', '.ts', '.tsx', '.js', '.jsx', ".html", ".css")
+
     def get_modified_and_untracked_files(self) -> list:
         """Queries Git status porcelain to catch all un-staged modifications and raw untracked files."""
         files_to_sync = set()
-        target_extensions = ('.py', '.ts', '.tsx', '.js', '.jsx')
         try:
             status_output = subprocess.check_output(
                 ["git", "status", "--porcelain"], cwd=self.root_dir, stderr=subprocess.DEVNULL
@@ -28,7 +29,7 @@ class GitSyncManager:
                     file_path = line[3:].strip()
                     if file_path.startswith('"') and file_path.endswith('"'):
                         file_path = file_path[1:-1]
-                    if file_path.lower().endswith(target_extensions):
+                    if file_path.lower().endswith(self.target_extensions):
                         files_to_sync.add(file_path)
         except Exception as e:
             print(f"⚠️ Git porcelain status trace failed: {e}")
@@ -41,13 +42,12 @@ class GitSyncManager:
         that aren't indexed inside the active FalkorDB instance.
         """
         missing_from_db = []
-        target_extensions = ('.py', '.ts', '.tsx', '.js', '.jsx')
         exclude_dirs = {'.git', '.venv', '.wvenv', 'node_modules', 'dist', 'build'}
 
         for root, dirs, files in os.walk(self.root_dir):
             dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]
             for file in files:
-                if file.lower().endswith(target_extensions):
+                if file.lower().endswith(self.target_extensions):
                     full_path = os.path.join(root, file)
                     db_rel_path = os.path.relpath(full_path, self.root_dir).replace("\\", "/")
                     if db_rel_path.startswith("src/"):
