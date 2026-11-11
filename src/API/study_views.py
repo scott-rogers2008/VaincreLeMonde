@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlparse
 from sqlalchemy import text as sa_text
+from sqlalchemy import inspect
 import json
 import logging
 import os
@@ -32,27 +33,29 @@ class DynamicQuizEndpoint(APIView):
         work_id = request.query_params.get('work_id', '8')
         
         # Connect safely using the direct centralized pool engine mapping
-        with engine.connect() as conn:
-            query = sa_text("""
-                SELECT id, topic, question, options, correct_answer, rationale, verification_status, ai_feedback 
-                FROM study_quiz_bank 
-                WHERE work_id = :work 
-                ORDER BY id DESC
-            """)
-            result = conn.execute(query, {"work": int(work_id)}).fetchall()
-            
-            question_list = []
-            for row in result:
-                question_list.append({
-                    "id": row[0], 
-                    "topic": row[1], 
-                    "question": row[2],
-                    "options": json.loads(row[3]) if isinstance(row[3], str) else row[3],
-                    "correctAnswer": row[4], 
-                    "rationale": row[5],
-                    "verificationStatus": row[6], 
-                    "aiFeedback": row[7]
-                })
+        inspector = inspect(engine)
+        question_list = []
+        if inspector.has_table("study_quiz_bank"):
+            with engine.connect() as conn:
+                query = sa_text("""
+                    SELECT id, topic, question, options, correct_answer, rationale, verification_status, ai_feedback 
+                    FROM study_quiz_bank 
+                    WHERE work_id = :work 
+                    ORDER BY id DESC
+                """)
+                result = conn.execute(query, {"work": int(work_id)}).fetchall()
+                
+                for row in result:
+                    question_list.append({
+                        "id": row[0], 
+                        "topic": row[1], 
+                        "question": row[2],
+                        "options": json.loads(row[3]) if isinstance(row[3], str) else row[3],
+                        "correctAnswer": row[4], 
+                        "rationale": row[5],
+                        "verificationStatus": row[6], 
+                        "aiFeedback": row[7]
+                    })
         return Response({"status": "success", "data": question_list}, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -99,6 +102,22 @@ Output a clean JSON block exactly like this:
         ai_feedback = audit_report.get("feedback", "Audit complete.")
 
         # Commit permanently using direct engine context managers
+        inspector = inspect(engine)
+        if not inspector.has_table("study_quiz_bank"):
+            with engine.begin() as conn:
+                conn.execute(sa_text("""
+                    CREATE TABLE study_quiz_bank (
+                        id SERIAL PRIMARY KEY,
+                        work_id INTEGER NOT NULL,
+                        topic TEXT NOT NULL,
+                        question TEXT NOT NULL,
+                        options JSONB NOT NULL,
+                        correct_answer TEXT NOT NULL,
+                        rationale TEXT,
+                        verification_status TEXT DEFAULT 'PENDING',
+                        ai_feedback TEXT
+                    );
+                """))
         with engine.begin() as conn:
             insert_sql = sa_text("""
                 INSERT INTO study_quiz_bank (work_id, topic, question, options, correct_answer, rationale, verification_status, ai_feedback)
@@ -261,22 +280,24 @@ class FetchStudyDocumentView(APIView):
         if not work_id:
             return Response({"error": "Missing critical query parameter: work_id"}, status=status.HTTP_400_BAD_REQUEST)
 
+        print(f"🔍 Fetching study document for Work ID: {work_id}")
         try:
             # 1. Query your database registry to find the dynamic path saved during ingestion
             with engine.connect() as conn:
-                query = sa_text("SELECT title, local_path FROM literary_works WHERE id = :work")
+                query = sa_text(f"SELECT title, local_path FROM literary_works WHERE id = {work_id}")
                 result = conn.execute(query, {"work": int(work_id)}).fetchone()
 
             if not result:
                 return Response({"error": f"No active discourse library match found for Work ID: {work_id}"}, status=status.HTTP_404_NOT_FOUND)
 
             resolved_title, registered_disk_path = result[0], result[1]
+            print(f"✅ Resolved title: {resolved_title}, Registered path: {registered_disk_path}")
 
             # 2. Safety Check: If path is unbound, generate a default contextual lookup parameter
             if not registered_disk_path:
                 from agentic.language_tutor.tools.file_management import _get_unified_references_path
                 base_refs = _get_unified_references_path()
-                registered_disk_path = os.path.join(base_refs, "stories", "english", "english_conference_study.md")
+                registered_disk_path = os.path.join(base_refs, "stories", "english", resolved_title.replace(' ', '_').lower() + ".md")
 
             # 3. Verify real-time presence on disk matching your dynamic workspace slugs
             if not os.path.exists(registered_disk_path):
@@ -315,30 +336,6 @@ class FetchStudyDocumentView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = [] 
-
-    def get(self, request, *args, **kwargs):
-        # Gracefully isolate the lowercase language target parameters
-        language = request.query_params.get('language', 'English').strip().lower()
-        
-        try:
-            # Leverage your centralized git-root reference helper to map paths accurately
-            base_refs = _get_unified_references_path()
-            filename = f"{language}_conference_study.md"
-            target_path = os.path.normpath(os.path.join(base_refs, "stories", language, filename))
-            
-            if not os.path.exists(target_path):
-                logger.warning(f"Fetch study file requested but missing on disk lookups at: {target_path}")
-                return Response({"error": f"No compiled study file found on filesystem at path: {target_path}"}, status=status.HTTP_404_NOT_FOUND)
-                
-            # Safely extract pristine markdown text lines
-            with open(target_path, "r", encoding="utf-8") as f:
-                markdown_content = f.read()
-                
-            return Response({"status": "success", "content": markdown_content}, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Failed to read target markdown data document: {str(e)}", exc_info=True)
-            return Response({"error": f"Internal filesystem read tracking exception: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CurriculumExplorerListView(APIView):

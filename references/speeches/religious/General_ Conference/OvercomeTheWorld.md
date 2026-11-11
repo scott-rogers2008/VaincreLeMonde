@@ -2,6 +2,7 @@
 ### By President Russell M. Nelson
 ### President of The Church of Jesus Christ of Latter-day Saints
 #### October 2022
+
 My dear brothers and sisters, I am grateful to greet you on this glorious Sabbath morning. You are constantly on my mind. I marvel at the way you spring into action whenever you see others in need. I stand amazed at the faith and testimony you demonstrate again and again. I weep over your heartaches, disappointments, and worries. I love you. I assure you that our Heavenly Father and His Beloved Son, Jesus Christ, love you. They are intimately aware of your circumstances, your goodness, your needs, and your prayers for help. Again and again, I pray for you to feel Their love for you.
 
 Experiencing Their love is vital, as it seems that we are accosted daily by an onslaught of sobering news. You may have had days when you wished you could don your pajamas, curl up in a ball, and ask someone to awaken you when the turmoil is over.
